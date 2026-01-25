@@ -57,7 +57,6 @@
         }
     }
     </script>
-    <!-- Babel for JSX transpiling in browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-sky-50 overflow-hidden">
@@ -68,7 +67,7 @@
         import ReactDOM from 'react-dom/client';
         import { GoogleGenAI, Type } from '@google/genai';
 
-        // --- Constants & Data ---
+        // --- Dữ liệu thành ngữ ---
         const INITIAL_IDIOMS = [
             { id: '1', part1: 'Học thầy không tày', part2: 'học bạn' },
             { id: '2', part1: 'Ăn quả nhớ kẻ', part2: 'trồng cây' },
@@ -102,13 +101,13 @@
             </svg>
         );
 
-        // --- Service: Gemini AI ---
+        // --- Trí tuệ nhân tạo Gemini ---
         const getIdiomInsight = async (idiom) => {
             const ai = new GoogleGenAI({ apiKey: window.process?.env?.API_KEY || '' });
             try {
                 const response = await ai.models.generateContent({
                     model: "gemini-3-flash-preview",
-                    contents: `Giải thích ý nghĩa của thành ngữ "${idiom}" cho học sinh tiểu học ngắn gọn, dễ hiểu. Kèm lời khen.`,
+                    contents: `Giải thích ý nghĩa của thành ngữ "${idiom}" cho trẻ em ngắn gọn, dễ hiểu và đưa ra lời khen.`,
                     config: {
                         responseMimeType: "application/json",
                         responseSchema: {
@@ -123,11 +122,45 @@
                 });
                 return JSON.parse(response.text);
             } catch (error) {
-                return { explanation: "Bạn vừa ghép đúng một thành ngữ rất hay đó!", praise: "Tuyệt vời!" };
+                return { explanation: "Bạn vừa ghép đúng một câu thành ngữ rất ý nghĩa!", praise: "Cố gắng lên nhé!" };
             }
         };
 
-        // --- Components ---
+        const ShareModal = ({ isOpen, onClose }) => {
+            if (!isOpen) return null;
+            const currentUrl = window.location.href;
+            // Sử dụng API tạo QR miễn phí
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}&bgcolor=ffffff`;
+
+            const copyToClipboard = () => {
+                navigator.clipboard.writeText(currentUrl);
+                alert("Đã sao chép link trang web!");
+            };
+
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-blue-900/60 backdrop-blur-md p-4">
+                    <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center transform animate-in zoom-in duration-300 border-4 border-blue-100">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-black text-blue-900">Chia sẻ trò chơi</h3>
+                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><i className="fas fa-times text-xl"></i></button>
+                        </div>
+                        
+                        <div className="bg-sky-50 p-6 rounded-3xl mb-6 flex flex-col items-center border-2 border-dashed border-blue-200">
+                            <img src={qrUrl} alt="Mã QR Truy cập" className="w-48 h-48 shadow-lg rounded-lg mb-4 bg-white p-2" />
+                            <p className="text-xs text-blue-600 font-bold uppercase tracking-wider">Quét để chơi ngay</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <button onClick={copyToClipboard} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg">
+                                <i className="fas fa-link"></i> Sao chép liên kết
+                            </button>
+                            <p className="text-[10px] text-gray-400 italic">Lưu ý: Bạn cần đưa ứng dụng lên mạng (GitHub Pages) thì mã QR này mới có tác dụng với người khác.</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const VictoryEffects = () => {
             const bubbles = useMemo(() => Array.from({ length: 30 }).map((_, i) => ({
                 id: i, left: `${Math.random() * 100}%`, size: `${Math.random() * 40 + 20}px`,
@@ -145,51 +178,18 @@
             );
         };
 
-        const ShareModal = ({ isOpen, onClose }) => {
-            if (!isOpen) return null;
-            const currentUrl = window.location.href;
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`;
-
-            const copyToClipboard = () => {
-                navigator.clipboard.writeText(currentUrl);
-                alert("Đã sao chép liên kết vào bộ nhớ tạm!");
-            };
-
-            return (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl text-center transform animate-in zoom-in duration-300">
-                        <h3 className="text-2xl font-black text-blue-900 mb-4">Chia sẻ ứng dụng</h3>
-                        <p className="text-gray-500 text-sm mb-6 font-medium">Để người khác có thể chơi, bạn hãy đưa ứng dụng lên mạng (như GitHub Pages) rồi quét mã này nhé!</p>
-                        
-                        <div className="bg-gray-50 p-4 rounded-2xl inline-block mb-6 border-2 border-dashed border-blue-200">
-                            <img src={qrUrl} alt="QR Code" className="w-48 h-48 mx-auto" />
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <button onClick={copyToClipboard} className="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2">
-                                <i className="fas fa-copy"></i> Sao chép liên kết
-                            </button>
-                            <button onClick={onClose} className="bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200">
-                                Đóng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
         const App = () => {
             const [score, setScore] = useState(0);
             const [pieces, setPieces] = useState([]);
             const [flippedPieceIds, setFlippedPieceIds] = useState([]);
             const [matchedIdiomIds, setMatchedIdiomIds] = useState([]);
             const [shakingPieceIds, setShakingPieceIds] = useState([]);
-            const [isChecking, setIsChecking] = useState(false);
             const [status, setStatus] = useState('LOADING');
             const [feedback, setFeedback] = useState(null);
             const [insight, setInsight] = useState(null);
             const [activeIdioms, setActiveIdioms] = useState([]);
             const [isShareOpen, setIsShareOpen] = useState(false);
+            const [isChecking, setIsChecking] = useState(false);
 
             const startNewRound = useCallback((resetScore = false) => {
                 if (resetScore) setScore(0);
@@ -262,6 +262,7 @@
 
             return (
                 <div className="relative w-full h-screen overflow-hidden flex flex-col font-sans text-gray-800 bg-sky-50">
+                    {/* Background Scenery */}
                     <div className="absolute inset-0 z-0 pointer-events-none select-none">
                         <div className="absolute top-10 right-10 w-24 h-24 bg-yellow-400 rounded-full animate-sun flex items-center justify-center">
                             <div className="w-20 h-20 bg-yellow-300 rounded-full border-4 border-yellow-200" />
@@ -276,23 +277,25 @@
                     <div className="relative z-10 flex flex-col items-center justify-start h-full pt-6 px-4">
                         <header className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-4 w-full max-w-2xl flex justify-between items-center mb-8 border-b-8 border-blue-200">
                             <div className="flex items-center gap-4">
-                                <div className="bg-blue-500 p-4 rounded-2xl text-white"><i className="fas fa-puzzle-piece text-2xl"></i></div>
+                                <div className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg"><i className="fas fa-brain text-2xl"></i></div>
                                 <div>
                                     <h1 className="text-2xl font-black text-blue-900 leading-none">Thành Ngữ Nhí</h1>
-                                    <p className="text-sm text-blue-600 font-bold mt-1 uppercase">Luyện Trí Nhớ</p>
+                                    <p className="text-xs text-blue-600 font-bold mt-1 uppercase tracking-widest">Trí Nhớ Siêu Phàm</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3">
                                 <button 
                                     onClick={() => setIsShareOpen(true)}
-                                    className="p-3 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors"
-                                    title="Chia sẻ mã QR"
+                                    className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all flex flex-col items-center"
+                                    title="Mã QR Chia Sẻ"
                                 >
-                                    <i className="fas fa-share-nodes"></i>
+                                    <i className="fas fa-qrcode text-xl"></i>
+                                    <span className="text-[8px] font-black uppercase mt-1">Mã QR</span>
                                 </button>
+                                <div className="h-10 w-px bg-gray-200 mx-1"></div>
                                 <div className="text-right">
-                                    <div className="text-xs font-bold text-gray-400 uppercase">Điểm Số</div>
-                                    <div className="text-4xl font-black text-orange-500">{score}</div>
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Điểm</div>
+                                    <div className="text-4xl font-black text-orange-500 tabular-nums">{score}</div>
                                 </div>
                             </div>
                         </header>
@@ -303,12 +306,14 @@
                                 const isMatched = matchedIdiomIds.includes(piece.idiomId);
                                 return (
                                     <div key={piece.id} onClick={() => handlePieceClick(piece)}
-                                        className={`card-container relative h-32 w-full cursor-pointer transition-transform duration-300 hover:scale-105 ${isVisible ? 'card-flipped' : ''}`}
+                                        className={`card-container relative h-32 w-full cursor-pointer transition-transform duration-300 hover:scale-105 active:scale-95 ${isVisible ? 'card-flipped' : ''}`}
                                     >
                                         <div className={`card-inner h-full w-full ${shakingPieceIds.includes(piece.id) ? 'animate-shake' : ''}`}>
-                                            <div className="card-face card-back border-red-500"><i className="fas fa-question text-2xl"></i></div>
-                                            <div className={`card-face card-front px-3 py-1 text-center border-blue-400 ${isMatched ? 'border-green-500 bg-green-50' : 'bg-white'}`}>
-                                                <p className={`text-base font-bold ${isMatched ? 'text-green-700' : 'text-blue-900'}`}>{piece.text}</p>
+                                            <div className="card-face card-back border-red-500 shadow-md">
+                                                <i className="fas fa-question text-3xl"></i>
+                                            </div>
+                                            <div className={`card-face card-front px-3 py-1 text-center border-blue-400 shadow-xl ${isMatched ? 'border-green-500 bg-green-50' : 'bg-white'}`}>
+                                                <p className={`text-base font-black ${isMatched ? 'text-green-700' : 'text-blue-900'}`}>{piece.text}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -317,17 +322,28 @@
                         </main>
 
                         <div className="w-full max-w-2xl min-h-[140px] flex flex-col items-center justify-center gap-4">
-                            {feedback && <div className={`px-8 py-3 rounded-full font-black shadow-xl animate-bounce text-white ${feedback.type === 'success' ? 'bg-green-500' : 'bg-orange-500'}`}>{feedback.text}</div>}
+                            {feedback && (
+                                <div className={`px-8 py-3 rounded-full font-black shadow-xl animate-bounce text-white flex items-center gap-2 ${feedback.type === 'success' ? 'bg-green-500' : 'bg-orange-600'}`}>
+                                    <i className={`fas ${feedback.type === 'success' ? 'fa-check' : 'fa-times'}`}></i>
+                                    {feedback.text}
+                                </div>
+                            )}
                             {insight && !feedback && (
-                                <div className="bg-white/95 p-5 rounded-3xl border-l-[12px] border-yellow-400 shadow-2xl w-full animate-in slide-in-from-bottom-5">
-                                    <p className="text-lg font-medium text-gray-700 italic mb-2">"{insight.explanation}"</p>
-                                    <p className="text-sm font-black text-blue-600 text-right uppercase">— {insight.praise} ✨</p>
+                                <div className="bg-white/95 p-6 rounded-[2rem] border-l-[15px] border-yellow-400 shadow-2xl w-full animate-in slide-in-from-bottom-5 duration-500">
+                                    <p className="text-lg font-bold text-gray-700 italic mb-3 leading-relaxed">"{insight.explanation}"</p>
+                                    <div className="flex items-center justify-end gap-2 text-blue-600 font-black uppercase text-sm">
+                                        <span>{insight.praise}</span>
+                                        <i className="fas fa-rocket animate-pulse"></i>
+                                    </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[80%] max-w-md h-6 bg-white/50 rounded-full p-1 border-2 border-white shadow-lg overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all duration-1000" style={{ width: `${Math.min(score, 100)}%` }}></div>
+                        {/* Progress Bar */}
+                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[80%] max-w-md h-7 bg-white/40 backdrop-blur rounded-full p-1 border-2 border-white shadow-xl overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full transition-all duration-1000 ease-out flex items-center justify-end pr-2 shadow-inner" style={{ width: `${Math.min(score, 100)}%` }}>
+                                <div className="w-4 h-4 bg-white rounded-full animate-pulse"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -336,12 +352,21 @@
                     {status === 'WON' && (
                         <>
                             <VictoryEffects />
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900/40 backdrop-blur-md p-4">
-                                <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl text-center">
-                                    <div className="w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-trophy text-white text-5xl"></i></div>
-                                    <h2 className="text-3xl font-black text-blue-900 mb-4 uppercase">Chiến Thắng!</h2>
-                                    <p className="text-gray-500 mb-8 font-bold">Trí nhớ của bạn thật đáng kinh ngạc!</p>
-                                    <button onClick={() => startNewRound(true)} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-700 transition-all">CHƠI LẠI</button>
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900/40 backdrop-blur-lg p-4">
+                                <div className="bg-white rounded-[3rem] p-10 max-w-md w-full shadow-[0_20px_60px_rgba(0,0,0,0.3)] text-center transform animate-in zoom-in duration-500">
+                                    <div className="w-28 h-28 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl border-8 border-white">
+                                        <i className="fas fa-trophy text-white text-5xl"></i>
+                                    </div>
+                                    <h2 className="text-4xl font-black text-blue-900 mb-2 uppercase">Vô Địch!</h2>
+                                    <p className="text-gray-500 mb-10 font-bold text-lg">Bạn đã hoàn thành bài học 100 điểm!</p>
+                                    <div className="flex flex-col gap-3">
+                                        <button onClick={() => startNewRound(true)} className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-xl hover:scale-105 active:scale-95 transition-all text-xl">
+                                            CHƠI LẠI
+                                        </button>
+                                        <button onClick={() => setIsShareOpen(true)} className="w-full bg-sky-50 text-blue-600 font-black py-4 rounded-3xl border-2 border-blue-200">
+                                            KHOE VỚI BẠN BÈ (QR)
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </>
@@ -349,8 +374,8 @@
 
                     {status === 'LOADING' && (
                         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-sky-100">
-                            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                            <p className="text-blue-600 font-bold">Đang chuẩn bị...</p>
+                            <div className="w-16 h-16 border-8 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+                            <p className="text-blue-700 font-black text-xl uppercase tracking-widest animate-pulse">Đang chuẩn bị sách vở...</p>
                         </div>
                     )}
                 </div>
