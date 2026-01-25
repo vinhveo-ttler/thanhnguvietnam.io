@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thành Ngữ Nhí - Trí Nhớ Siêu Phàm</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <style>
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+        @keyframes sun-glow { 0%, 100% { box-shadow: 0 0 40px #facc15; } 50% { box-shadow: 0 0 70px #facc15; } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-sway { animation: sway 4s ease-in-out infinite; transform-origin: bottom; }
+        .animate-sun { animation: sun-glow 4s ease-in-out infinite; }
+        
+        .card-container { perspective: 1000px; }
+        .card-inner {
+            position: relative; width: 100%; height: 100%; text-align: center;
+            transition: transform 0.6s; transform-style: preserve-3d;
+        }
+        .card-flipped .card-inner { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            border-radius: 1rem; display: flex; align-items: center; justify-content: center;
+            border-width: 4px;
+        }
+        .card-back { background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); color: white; }
+        .card-front { background: white; transform: rotateY(180deg); }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0) rotateY(180deg); }
+            25% { transform: translateX(-5px) rotateY(180deg); }
+            75% { transform: translateX(5px) rotateY(180deg); }
+        }
+        .animate-shake { animation: shake 0.4s ease-in-out infinite; }
+
+        .celebration-bubble { position: absolute; bottom: -50px; border-radius: 50%; animation: rise linear infinite; }
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1); opacity: 0.7; }
+            100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+        }
+    </style>
+
+    <!-- Import Map for ESM Modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom": "https://esm.sh/react-dom@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "@google/genai": "https://esm.sh/@google/genai@1.3.0"
+        }
+    }
+    </script>
+    <!-- Babel for JSX transpiling in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-sky-50 overflow-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useCallback, useMemo } from 'react';
+        import ReactDOM from 'react-dom/client';
+        import { GoogleGenAI, Type } from '@google/genai';
+
+        // --- Constants & Data ---
+        const INITIAL_IDIOMS = [
+            { id: '1', part1: 'Học thầy không tày', part2: 'học bạn' },
+            { id: '2', part1: 'Ăn quả nhớ kẻ', part2: 'trồng cây' },
+            { id: '3', part1: 'Gần mực thì đen', part2: 'gần đèn thì rạng' },
+            { id: '4', part1: 'Có công mài sắt', part2: 'có ngày nên kim' },
+            { id: '5', part1: 'Uống nước', part2: 'nhớ nguồn' },
+            { id: '6', part1: 'Lá lành', part2: 'đùm lá rách' },
+            { id: '7', part1: 'Tốt gỗ', part2: 'hơn tốt nước sơn' },
+            { id: '8', part1: 'Đi một ngày đàng', part2: 'học một sàng khôn' },
+        ];
+
+        const TreeSVG = () => (
+            <svg width="120" height="180" viewBox="0 0 120 180" fill="none" className="opacity-80">
+                <rect x="50" y="100" width="20" height="80" fill="#78350f" />
+                <circle cx="60" cy="70" r="60" fill="#15803d" />
+                <circle cx="30" cy="50" r="30" fill="#16a34a" />
+                <circle cx="90" cy="50" r="30" fill="#16a34a" />
+                <circle cx="60" cy="30" r="40" fill="#22c55e" />
+            </svg>
+        );
+
+        const StudentSVG = () => (
+            <svg width="80" height="120" viewBox="0 0 80 120" fill="none">
+                <circle cx="40" cy="30" r="25" fill="#fde68a" />
+                <rect x="25" y="55" width="30" height="45" rx="5" fill="#3b82f6" />
+                <rect x="20" y="100" width="15" height="20" fill="#000" />
+                <rect x="45" y="100" width="15" height="20" fill="#000" />
+                <circle cx="32" cy="25" r="3" fill="#000" />
+                <circle cx="48" cy="25" r="3" fill="#000" />
+                <path d="M35 40C35 40 40 45 45 40" stroke="#000" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+        );
+
+        // --- Service: Gemini AI ---
+        const getIdiomInsight = async (idiom) => {
+            const ai = new GoogleGenAI({ apiKey: window.process?.env?.API_KEY || '' });
+            try {
+                const response = await ai.models.generateContent({
+                    model: "gemini-3-flash-preview",
+                    contents: `Giải thích ý nghĩa của thành ngữ "${idiom}" cho học sinh tiểu học ngắn gọn, dễ hiểu. Kèm lời khen.`,
+                    config: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: Type.OBJECT,
+                            properties: {
+                                explanation: { type: Type.STRING },
+                                praise: { type: Type.STRING },
+                            },
+                            required: ["explanation", "praise"],
+                        },
+                    },
+                });
+                return JSON.parse(response.text);
+            } catch (error) {
+                return { explanation: "Bạn vừa ghép đúng một thành ngữ rất hay đó!", praise: "Tuyệt vời!" };
+            }
+        };
+
+        // --- Components ---
+        const VictoryEffects = () => {
+            const bubbles = useMemo(() => Array.from({ length: 30 }).map((_, i) => ({
+                id: i, left: `${Math.random() * 100}%`, size: `${Math.random() * 40 + 20}px`,
+                delay: `${Math.random() * 5}s`, duration: `${Math.random() * 3 + 4}s`,
+                color: ['#FBBF24', '#F87171', '#60A5FA', '#34D399', '#A78BFA'][Math.floor(Math.random() * 5)],
+            })), []);
+            return (
+                <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden">
+                    {bubbles.map(b => (
+                        <div key={b.id} className="celebration-bubble opacity-70"
+                            style={{ left: b.left, width: b.size, height: b.size, backgroundColor: b.color, animationDelay: b.delay, animationDuration: b.duration }}
+                        />
+                    ))}
+                </div>
+            );
+        };
+
+        const ShareModal = ({ isOpen, onClose }) => {
+            if (!isOpen) return null;
+            const currentUrl = window.location.href;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`;
+
+            const copyToClipboard = () => {
+                navigator.clipboard.writeText(currentUrl);
+                alert("Đã sao chép liên kết vào bộ nhớ tạm!");
+            };
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl text-center transform animate-in zoom-in duration-300">
+                        <h3 className="text-2xl font-black text-blue-900 mb-4">Chia sẻ ứng dụng</h3>
+                        <p className="text-gray-500 text-sm mb-6 font-medium">Để người khác có thể chơi, bạn hãy đưa ứng dụng lên mạng (như GitHub Pages) rồi quét mã này nhé!</p>
+                        
+                        <div className="bg-gray-50 p-4 rounded-2xl inline-block mb-6 border-2 border-dashed border-blue-200">
+                            <img src={qrUrl} alt="QR Code" className="w-48 h-48 mx-auto" />
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                            <button onClick={copyToClipboard} className="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2">
+                                <i className="fas fa-copy"></i> Sao chép liên kết
+                            </button>
+                            <button onClick={onClose} className="bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200">
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [score, setScore] = useState(0);
+            const [pieces, setPieces] = useState([]);
+            const [flippedPieceIds, setFlippedPieceIds] = useState([]);
+            const [matchedIdiomIds, setMatchedIdiomIds] = useState([]);
+            const [shakingPieceIds, setShakingPieceIds] = useState([]);
+            const [isChecking, setIsChecking] = useState(false);
+            const [status, setStatus] = useState('LOADING');
+            const [feedback, setFeedback] = useState(null);
+            const [insight, setInsight] = useState(null);
+            const [activeIdioms, setActiveIdioms] = useState([]);
+            const [isShareOpen, setIsShareOpen] = useState(false);
+
+            const startNewRound = useCallback((resetScore = false) => {
+                if (resetScore) setScore(0);
+                const selected = [...INITIAL_IDIOMS].sort(() => 0.5 - Math.random()).slice(0, 4);
+                setActiveIdioms(selected);
+                const newPieces = [];
+                selected.forEach(idiom => {
+                    newPieces.push({ id: `p1-${idiom.id}`, text: idiom.part1, idiomId: idiom.id, type: 'part1' });
+                    newPieces.push({ id: `p2-${idiom.id}`, text: idiom.part2, idiomId: idiom.id, type: 'part2' });
+                });
+                setPieces([...newPieces].sort(() => 0.5 - Math.random()));
+                setFlippedPieceIds([]);
+                setMatchedIdiomIds([]);
+                setShakingPieceIds([]);
+                setIsChecking(false);
+                setStatus('PLAYING');
+                setInsight(null);
+            }, []);
+
+            useEffect(() => { setTimeout(() => startNewRound(), 1000); }, [startNewRound]);
+
+            const handlePieceClick = async (piece) => {
+                if (status !== 'PLAYING' || isChecking) return;
+                if (flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId)) return;
+                if (flippedPieceIds.length >= 2) return;
+
+                const newFlipped = [...flippedPieceIds, piece.id];
+                setFlippedPieceIds(newFlipped);
+
+                if (newFlipped.length === 2) {
+                    setIsChecking(true);
+                    const firstPiece = pieces.find(p => p.id === newFlipped[0]);
+                    const secondPiece = piece;
+
+                    setTimeout(async () => {
+                        if (firstPiece.idiomId === secondPiece.idiomId) {
+                            const newScore = score + 10;
+                            setScore(newScore);
+                            setMatchedIdiomIds(prev => [...prev, firstPiece.idiomId]);
+                            setFlippedPieceIds([]);
+                            setFeedback({ text: 'Chính xác! +10 điểm', type: 'success' });
+                            setIsChecking(false);
+
+                            const idiomObj = activeIdioms.find(i => i.id === piece.idiomId);
+                            if (idiomObj) {
+                                const data = await getIdiomInsight(`${idiomObj.part1} ${idiomObj.part2}`);
+                                setInsight(data);
+                            }
+
+                            if (matchedIdiomIds.length + 1 === 4) {
+                                if (newScore >= 100) {
+                                    setStatus('WON');
+                                } else {
+                                    setTimeout(() => startNewRound(), 3500);
+                                }
+                            }
+                        } else {
+                            setShakingPieceIds(newFlipped);
+                            setFeedback({ text: 'Thử lại nhé!', type: 'error' });
+                            setTimeout(() => {
+                                setShakingPieceIds([]);
+                                setFlippedPieceIds([]);
+                                setIsChecking(false);
+                            }, 1000);
+                        }
+                    }, 800);
+                }
+                setTimeout(() => setFeedback(null), 2500);
+            };
+
+            return (
+                <div className="relative w-full h-screen overflow-hidden flex flex-col font-sans text-gray-800 bg-sky-50">
+                    <div className="absolute inset-0 z-0 pointer-events-none select-none">
+                        <div className="absolute top-10 right-10 w-24 h-24 bg-yellow-400 rounded-full animate-sun flex items-center justify-center">
+                            <div className="w-20 h-20 bg-yellow-300 rounded-full border-4 border-yellow-200" />
+                        </div>
+                        <div className="absolute bottom-0 w-full h-[15%] bg-green-500 rounded-t-[100%] scale-x-150 transform translate-y-1/4"></div>
+                        <div className="absolute bottom-16 left-8 animate-sway"><TreeSVG /></div>
+                        <div className="absolute bottom-12 right-4 animate-sway" style={{ animationDelay: '1s' }}><TreeSVG /></div>
+                        <div className="absolute bottom-8 left-[15%] transform scale-x-[-1] opacity-90"><StudentSVG /></div>
+                        <div className="absolute bottom-8 right-[15%] opacity-90"><StudentSVG /></div>
+                    </div>
+
+                    <div className="relative z-10 flex flex-col items-center justify-start h-full pt-6 px-4">
+                        <header className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-4 w-full max-w-2xl flex justify-between items-center mb-8 border-b-8 border-blue-200">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-blue-500 p-4 rounded-2xl text-white"><i className="fas fa-puzzle-piece text-2xl"></i></div>
+                                <div>
+                                    <h1 className="text-2xl font-black text-blue-900 leading-none">Thành Ngữ Nhí</h1>
+                                    <p className="text-sm text-blue-600 font-bold mt-1 uppercase">Luyện Trí Nhớ</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button 
+                                    onClick={() => setIsShareOpen(true)}
+                                    className="p-3 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors"
+                                    title="Chia sẻ mã QR"
+                                >
+                                    <i className="fas fa-share-nodes"></i>
+                                </button>
+                                <div className="text-right">
+                                    <div className="text-xs font-bold text-gray-400 uppercase">Điểm Số</div>
+                                    <div className="text-4xl font-black text-orange-500">{score}</div>
+                                </div>
+                            </div>
+                        </header>
+
+                        <main className="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            {pieces.map(piece => {
+                                const isVisible = flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId);
+                                const isMatched = matchedIdiomIds.includes(piece.idiomId);
+                                return (
+                                    <div key={piece.id} onClick={() => handlePieceClick(piece)}
+                                        className={`card-container relative h-32 w-full cursor-pointer transition-transform duration-300 hover:scale-105 ${isVisible ? 'card-flipped' : ''}`}
+                                    >
+                                        <div className={`card-inner h-full w-full ${shakingPieceIds.includes(piece.id) ? 'animate-shake' : ''}`}>
+                                            <div className="card-face card-back border-red-500"><i className="fas fa-question text-2xl"></i></div>
+                                            <div className={`card-face card-front px-3 py-1 text-center border-blue-400 ${isMatched ? 'border-green-500 bg-green-50' : 'bg-white'}`}>
+                                                <p className={`text-base font-bold ${isMatched ? 'text-green-700' : 'text-blue-900'}`}>{piece.text}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </main>
+
+                        <div className="w-full max-w-2xl min-h-[140px] flex flex-col items-center justify-center gap-4">
+                            {feedback && <div className={`px-8 py-3 rounded-full font-black shadow-xl animate-bounce text-white ${feedback.type === 'success' ? 'bg-green-500' : 'bg-orange-500'}`}>{feedback.text}</div>}
+                            {insight && !feedback && (
+                                <div className="bg-white/95 p-5 rounded-3xl border-l-[12px] border-yellow-400 shadow-2xl w-full animate-in slide-in-from-bottom-5">
+                                    <p className="text-lg font-medium text-gray-700 italic mb-2">"{insight.explanation}"</p>
+                                    <p className="text-sm font-black text-blue-600 text-right uppercase">— {insight.praise} ✨</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[80%] max-w-md h-6 bg-white/50 rounded-full p-1 border-2 border-white shadow-lg overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all duration-1000" style={{ width: `${Math.min(score, 100)}%` }}></div>
+                        </div>
+                    </div>
+
+                    <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
+
+                    {status === 'WON' && (
+                        <>
+                            <VictoryEffects />
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900/40 backdrop-blur-md p-4">
+                                <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl text-center">
+                                    <div className="w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-6"><i className="fas fa-trophy text-white text-5xl"></i></div>
+                                    <h2 className="text-3xl font-black text-blue-900 mb-4 uppercase">Chiến Thắng!</h2>
+                                    <p className="text-gray-500 mb-8 font-bold">Trí nhớ của bạn thật đáng kinh ngạc!</p>
+                                    <button onClick={() => startNewRound(true)} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-700 transition-all">CHƠI LẠI</button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {status === 'LOADING' && (
+                        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-sky-100">
+                            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                            <p className="text-blue-600 font-bold">Đang chuẩn bị...</p>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
