@@ -30,8 +30,18 @@
             border-radius: 1.5rem; display: flex; align-items: center; justify-content: center;
             border-width: 4px;
         }
-        .card-back { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; }
-        .card-front { background: white; transform: rotateY(180deg); }
+        /* Mặt sau của thẻ - hiển thị số thứ tự */
+        .card-back { 
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
+            color: white; 
+            border-color: #2563eb;
+        }
+        /* Mặt trước của thẻ - hiển thị văn bản thành ngữ */
+        .card-front { 
+            background: white; 
+            transform: rotateY(180deg); 
+            border-color: #fb923c;
+        }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0) rotateY(180deg); }
@@ -92,15 +102,6 @@
         const CARDS_PER_ROUND = 4;
         const WIN_SCORE = 100;
 
-        // Âm thanh URLs
-        const SOUNDS = {
-            BGM: 'https://assets.mixkit.co/music/preview/mixkit-funny-paws-574.mp3',
-            FLIP: 'https://assets.mixkit.co/sfx/preview/mixkit-simple-click-952.mp3',
-            SUCCESS: 'https://assets.mixkit.co/sfx/preview/mixkit-magic-marimba-2820.mp3',
-            ERROR: 'https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3',
-            WIN: 'https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'
-        };
-
         const TreeSVG = () => (
             <svg width="120" height="180" viewBox="0 0 120 180" fill="none" className="opacity-80 drop-shadow-lg">
                 <rect x="50" y="100" width="20" height="80" fill="#78350f" />
@@ -159,38 +160,6 @@
             const [activeIdioms, setActiveIdioms] = useState([]);
             const [previewTimer, setPreviewTimer] = useState(PREVIEW_DURATION);
             const [isChecking, setIsChecking] = useState(false);
-            const [isMuted, setIsMuted] = useState(false);
-
-            // Audio Refs
-            const audioRefs = useRef({
-                bgm: new Audio(SOUNDS.BGM),
-                flip: new Audio(SOUNDS.FLIP),
-                success: new Audio(SOUNDS.SUCCESS),
-                error: new Audio(SOUNDS.ERROR),
-                win: new Audio(SOUNDS.WIN)
-            });
-
-            useEffect(() => {
-                const { bgm } = audioRefs.current;
-                bgm.loop = true;
-                bgm.volume = 0.4;
-                
-                return () => {
-                    bgm.pause();
-                };
-            }, []);
-
-            useEffect(() => {
-                audioRefs.current.bgm.muted = isMuted;
-            }, [isMuted]);
-
-            const playSound = (type) => {
-                const sound = audioRefs.current[type];
-                if (sound) {
-                    sound.currentTime = 0;
-                    sound.play().catch(e => console.log("Audio play blocked", e));
-                }
-            };
 
             const startNewRound = useCallback((resetScore = false) => {
                 if (resetScore) setScore(0);
@@ -204,6 +173,7 @@
                     newPieces.push({ id: `p2-${idiom.id}`, text: idiom.part2, idiomId: idiom.id });
                 });
 
+                // Xáo trộn và gán số thứ tự hiển thị từ 1 đến hết
                 const shuffled = [...newPieces].sort(() => 0.5 - Math.random()).map((p, i) => ({ ...p, displayIndex: i + 1 }));
                 setPieces(shuffled);
                 setFlippedPieceIds([]);
@@ -229,22 +199,13 @@
                         setStatus('PLAYING');
                     }
                 }
-                if (status === 'WON') {
-                    playSound('win');
-                }
             }, [status, previewTimer]);
 
             const handlePieceClick = async (piece) => {
-                // Khởi động nhạc nền ở lần nhấn đầu tiên nếu trình duyệt chặn tự phát
-                if (audioRefs.current.bgm.paused && !isMuted) {
-                    audioRefs.current.bgm.play();
-                }
-
                 if (status !== 'PLAYING' || isChecking) return;
                 if (flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId)) return;
                 if (flippedPieceIds.length >= 2) return;
 
-                playSound('flip');
                 const newFlipped = [...flippedPieceIds, piece.id];
                 setFlippedPieceIds(newFlipped);
 
@@ -258,7 +219,6 @@
                         setScore(newScore);
                         setMatchedIdiomIds(prev => [...prev, firstPiece.idiomId]);
                         setFlippedPieceIds([]);
-                        playSound('success');
                         setFeedback({ text: 'Rất giỏi! Bé đã ghép đúng!', type: 'success' });
                         setIsChecking(false);
 
@@ -277,7 +237,6 @@
                         }
                     } else {
                         setShakingPieceIds(newFlipped);
-                        playSound('error');
                         setFeedback({ text: 'Cố lên, thử lại nhé!', type: 'error' });
                         setTimeout(() => {
                             setShakingPieceIds([]);
@@ -300,7 +259,7 @@
 
             return (
                 <div className="relative w-full h-screen overflow-hidden flex flex-col font-sans text-slate-800 bg-blue-50">
-                    {/* Background Decors */}
+                    {/* Các chi tiết trang trí nền */}
                     <div className="absolute inset-0 z-0 pointer-events-none">
                         <div className="absolute top-10 right-10 w-24 h-24 bg-yellow-400 rounded-full animate-sun flex items-center justify-center">
                             <div className="w-20 h-20 bg-yellow-300 rounded-full border-4 border-yellow-100" />
@@ -321,18 +280,9 @@
                                     <p className="text-[11px] text-blue-600 font-bold uppercase tracking-[0.2em]">Siêu Cấp Trí Nhớ</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <button 
-                                    onClick={() => setIsMuted(!isMuted)} 
-                                    className="w-12 h-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
-                                    title={isMuted ? "Bật âm thanh" : "Tắt âm thanh"}
-                                >
-                                    <i className={`fas ${isMuted ? 'fa-volume-mute' : 'fa-volume-up'} text-xl`}></i>
-                                </button>
-                                <div className="text-right">
-                                    <div className="text-[11px] font-black text-slate-400 uppercase">Điểm của bé</div>
-                                    <div className="text-4xl font-black text-orange-500 tabular-nums">{score}</div>
-                                </div>
+                            <div className="text-right">
+                                <div className="text-[11px] font-black text-slate-400 uppercase">Điểm của bé</div>
+                                <div className="text-4xl font-black text-orange-500 tabular-nums">{score}</div>
                             </div>
                         </header>
 
@@ -345,19 +295,25 @@
                             </div>
                         )}
 
-                        <main className="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+                        {/* Tăng khoảng cách grid từ gap-8 lên gap-10 và thêm padding bao quanh */}
+                        <main className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-12 mb-10 px-4">
                             {pieces.map(piece => {
+                                // Trong chế độ PREVIEW, tất cả thẻ đều lật để thấy chữ
                                 const isFlipped = status === 'PREVIEW' || flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId);
                                 const isMatched = matchedIdiomIds.includes(piece.idiomId);
+                                
                                 return (
                                     <div key={piece.id} onClick={() => handlePieceClick(piece)}
-                                        className={`card-container relative h-44 w-full cursor-pointer transition-all duration-300 ${status === 'PLAYING' ? 'hover:scale-105 active:scale-95' : 'cursor-default'} ${isFlipped ? 'card-flipped' : ''}`}
+                                        className={`card-container relative h-48 w-full cursor-pointer transition-all duration-300 ${status === 'PLAYING' ? 'hover:scale-105 active:scale-95' : 'cursor-default'} ${isFlipped ? 'card-flipped' : ''}`}
                                     >
                                         <div className={`card-inner h-full w-full ${shakingPieceIds.includes(piece.id) ? 'animate-shake' : ''}`}>
-                                            <div className="card-face card-back border-blue-600 shadow-lg">
-                                                <span className="text-5xl font-black">{piece.displayIndex}</span>
+                                            {/* Mặt sau - Hiển thị Số thứ tự */}
+                                            <div className="card-face card-back shadow-lg">
+                                                <span className="text-6xl font-black">{piece.displayIndex}</span>
                                             </div>
-                                            <div className={`card-face card-front px-4 py-2 text-center border-orange-400 shadow-xl ${isMatched ? 'border-emerald-500 bg-emerald-50' : 'bg-white'}`}>
+                                            
+                                            {/* Mặt trước - Hiển thị Thành ngữ */}
+                                            <div className={`card-face card-front px-4 py-2 text-center shadow-xl ${isMatched ? 'border-emerald-500 bg-emerald-50' : ''}`}>
                                                 <p className={`text-xl font-black leading-tight ${isMatched ? 'text-emerald-700' : 'text-blue-900'}`}>{piece.text}</p>
                                             </div>
                                         </div>
