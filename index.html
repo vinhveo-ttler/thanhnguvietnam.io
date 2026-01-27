@@ -9,12 +9,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        body { font-family: 'Quicksand', sans-serif; }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
+        @keyframes float-slow { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(15px) rotate(-5deg); } }
         @keyframes sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
         @keyframes sun-glow { 0%, 100% { box-shadow: 0 0 30px #facc15; } 50% { box-shadow: 0 0 60px #facc15; } }
+        
         .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
         .animate-sway { animation: sway 4s ease-in-out infinite; transform-origin: bottom; }
         .animate-sun { animation: sun-glow 4s ease-in-out infinite; }
         
@@ -30,13 +37,13 @@
             border-radius: 1.5rem; display: flex; align-items: center; justify-content: center;
             border-width: 4px;
         }
-        /* Mặt sau của thẻ - hiển thị số thứ tự */
+        /* Mặt sau - Hiển thị số */
         .card-back { 
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
             color: white; 
             border-color: #2563eb;
         }
-        /* Mặt trước của thẻ - hiển thị văn bản thành ngữ */
+        /* Mặt trước - Hiển thị chữ */
         .card-front { 
             background: white; 
             transform: rotateY(180deg); 
@@ -112,16 +119,84 @@
             </svg>
         );
 
-        const StudentSVG = () => (
-            <svg width="80" height="120" viewBox="0 0 80 120" fill="none" className="drop-shadow-md">
-                <circle cx="40" cy="30" r="25" fill="#fde68a" />
-                <rect x="25" y="55" width="30" height="45" rx="5" fill="#3b82f6" />
-                <rect x="20" y="100" width="15" height="20" fill="#000" />
-                <rect x="45" y="100" width="15" height="20" fill="#000" />
-                <circle cx="32" cy="25" r="3" fill="#000" />
-                <circle cx="48" cy="25" r="3" fill="#000" />
-                <path d="M35 40C35 40 40 45 45 40" stroke="#000" strokeWidth="2" strokeLinecap="round" />
+        // Học sinh cấp 2 đeo khăn quàng đỏ với đầy đủ tay chân
+        const FullSecondaryStudentSVG = ({ type = 'boy' }) => (
+            <svg width="120" height="180" viewBox="0 0 120 180" fill="none" className="drop-shadow-md">
+                {/* Đầu và mặt */}
+                <circle cx="60" cy="35" r="28" fill="#fde68a" />
+                {/* Tóc */}
+                {type === 'boy' ? (
+                    <path d="M32 35C32 20 45 7 60 7C75 7 88 20 88 35H32Z" fill="#333" />
+                ) : (
+                    <path d="M32 35C32 15 45 5 60 5C75 5 88 15 88 35V70H75V45H45V70H32V35Z" fill="#333" />
+                )}
+                {/* Mắt */}
+                <circle cx="52" cy="35" r="3" fill="#000" />
+                <circle cx="68" cy="35" r="3" fill="#000" />
+                <path d="M55 50C55 50 60 55 65 50" stroke="#000" strokeWidth="2" strokeLinecap="round" />
+                
+                {/* Thân - Sơ mi trắng */}
+                <rect x="35" y="63" width="50" height="60" rx="6" fill="#fff" stroke="#cbd5e1" strokeWidth="1" />
+                
+                {/* Cánh tay */}
+                <path d="M35 70C25 75 20 95 25 105" stroke="#fff" strokeWidth="12" strokeLinecap="round" /> {/* Tay trái */}
+                <path d="M85 70C95 75 100 95 95 105" stroke="#fff" strokeWidth="12" strokeLinecap="round" /> {/* Tay phải */}
+                <circle cx="25" cy="105" r="6" fill="#fde68a" /> {/* Bàn tay trái */}
+                <circle cx="95" cy="105" r="6" fill="#fde68a" /> {/* Bàn tay phải */}
+
+                {/* Khăn quàng đỏ */}
+                <path d="M60 63L45 75L60 82L75 75L60 63Z" fill="#ef4444" />
+                <path d="M60 82L55 95L65 95L60 82Z" fill="#ef4444" />
+                
+                {/* Chân - Quần hoặc váy xanh đen */}
+                {type === 'boy' ? (
+                    <>
+                        <rect x="38" y="123" width="20" height="40" rx="4" fill="#1e293b" />
+                        <rect x="62" y="123" width="20" height="40" rx="4" fill="#1e293b" />
+                    </>
+                ) : (
+                    <path d="M35 123H85L90 150H30L35 123Z" fill="#1e293b" />
+                )}
+                
+                {/* Giày */}
+                <rect x="38" y="163" width="20" height="8" rx="4" fill="#000" />
+                <rect x="62" y="163" width="20" height="8" rx="4" fill="#000" />
             </svg>
+        );
+
+        const FloatingItems = () => (
+            <div className="absolute inset-0 pointer-events-none z-0">
+                {/* Sách vở */}
+                <div className="absolute top-[15%] left-[10%] animate-float opacity-50">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="#6366f1">
+                        <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h9v2z" />
+                    </svg>
+                </div>
+                <div className="absolute top-[35%] left-[5%] animate-float-slow opacity-30">
+                    <svg width="45" height="45" viewBox="0 0 24 24" fill="#10b981">
+                        <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z" />
+                    </svg>
+                </div>
+                {/* Bút mực */}
+                <div className="absolute top-[25%] right-[15%] animate-float-slow opacity-50">
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="#f43f5e">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                    </svg>
+                </div>
+                {/* Thước kẻ */}
+                <div className="absolute bottom-[45%] right-[8%] animate-float opacity-40 rotate-12">
+                    <svg width="80" height="30" viewBox="0 0 24 24" fill="#eab308">
+                        <path d="M21 18H3V6h18v12zM5 16h2v-2H5v2zm4 0h2v-2H9v2zm4 0h2v-2h-2v2zm4 0h2v-2h-2v2z" />
+                    </svg>
+                </div>
+                {/* Compa/Dụng cụ học tập */}
+                <div className="absolute top-[50%] right-[3%] animate-float-slow opacity-30">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="#a855f7">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+                        <path d="M12 7v10M7 12h10" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                </div>
+            </div>
         );
 
         const getIdiomInsight = async (idiomText) => {
@@ -129,7 +204,7 @@
             try {
                 const response = await ai.models.generateContent({
                     model: "gemini-3-flash-preview",
-                    contents: `Giải thích ý nghĩa của thành ngữ "${idiomText}" cho trẻ em ngắn gọn, dễ hiểu và đưa ra lời khen.`,
+                    contents: `Giải thích ý nghĩa của thành ngữ "${idiomText}" cho học sinh trung học cơ sở ngắn gọn, súc tích và khích lệ tinh thần học tập.`,
                     config: {
                         responseMimeType: "application/json",
                         responseSchema: {
@@ -144,7 +219,7 @@
                 });
                 return JSON.parse(response.text);
             } catch (error) {
-                return { explanation: "Bạn vừa ghép đúng một câu thành ngữ rất ý nghĩa!", praise: "Cố gắng lên nhé!" };
+                return { explanation: "Một câu thành ngữ giàu giá trị văn hóa và bài học cuộc sống!", praise: "Bạn có trí nhớ tuyệt vời!" };
             }
         };
 
@@ -173,7 +248,6 @@
                     newPieces.push({ id: `p2-${idiom.id}`, text: idiom.part2, idiomId: idiom.id });
                 });
 
-                // Xáo trộn và gán số thứ tự hiển thị từ 1 đến hết
                 const shuffled = [...newPieces].sort(() => 0.5 - Math.random()).map((p, i) => ({ ...p, displayIndex: i + 1 }));
                 setPieces(shuffled);
                 setFlippedPieceIds([]);
@@ -186,7 +260,7 @@
             }, []);
 
             useEffect(() => {
-                const init = setTimeout(() => startNewRound(), 1000);
+                const init = setTimeout(() => startNewRound(), 800);
                 return () => clearTimeout(init);
             }, [startNewRound]);
 
@@ -219,7 +293,7 @@
                         setScore(newScore);
                         setMatchedIdiomIds(prev => [...prev, firstPiece.idiomId]);
                         setFlippedPieceIds([]);
-                        setFeedback({ text: 'Rất giỏi! Bé đã ghép đúng!', type: 'success' });
+                        setFeedback({ text: 'Chính xác! Trí nhớ của bạn rất tốt!', type: 'success' });
                         setIsChecking(false);
 
                         const idiomObj = activeIdioms.find(i => i.id === piece.idiomId);
@@ -237,7 +311,7 @@
                         }
                     } else {
                         setShakingPieceIds(newFlipped);
-                        setFeedback({ text: 'Cố lên, thử lại nhé!', type: 'error' });
+                        setFeedback({ text: 'Chưa đúng rồi, hãy tập trung hơn!', type: 'error' });
                         setTimeout(() => {
                             setShakingPieceIds([]);
                             setFlippedPieceIds([]);
@@ -259,62 +333,63 @@
 
             return (
                 <div className="relative w-full h-screen overflow-hidden flex flex-col font-sans text-slate-800 bg-blue-50">
-                    {/* Các chi tiết trang trí nền */}
+                    {/* Các chi tiết trang trí */}
+                    <FloatingItems />
                     <div className="absolute inset-0 z-0 pointer-events-none">
                         <div className="absolute top-10 right-10 w-24 h-24 bg-yellow-400 rounded-full animate-sun flex items-center justify-center">
                             <div className="w-20 h-20 bg-yellow-300 rounded-full border-4 border-yellow-100" />
                         </div>
-                        <div className="absolute bottom-0 w-full h-[20%] bg-emerald-500 rounded-t-[100%] scale-x-150 transform translate-y-1/4"></div>
+                        <div className="absolute bottom-0 w-full h-[18%] bg-emerald-500 rounded-t-[100%] scale-x-150 transform translate-y-1/4"></div>
                         <div className="absolute bottom-16 left-12 animate-sway"><TreeSVG /></div>
                         <div className="absolute bottom-20 right-12 animate-sway" style={{ animationDelay: '1.5s' }}><TreeSVG /></div>
-                        <div className="absolute bottom-10 left-[20%] transform scale-x-[-1] opacity-90"><StudentSVG /></div>
-                        <div className="absolute bottom-10 right-[20%] opacity-90"><StudentSVG /></div>
+                        
+                        {/* Học sinh cấp 2 đeo khăn quàng đỏ đầy đủ bộ phận */}
+                        <div className="absolute bottom-6 left-[15%] transform scale-x-[-1] opacity-90">
+                            <FullSecondaryStudentSVG type="girl" />
+                        </div>
+                        <div className="absolute bottom-6 right-[15%] opacity-90">
+                            <FullSecondaryStudentSVG type="boy" />
+                        </div>
                     </div>
 
-                    <div className="relative z-10 flex flex-col items-center justify-start h-full pt-8 px-6">
-                        <header className="bg-white/80 backdrop-blur-lg rounded-[2rem] shadow-xl p-5 w-full max-w-2xl flex justify-between items-center mb-10 border-b-4 border-blue-200">
+                    <div className="relative z-10 flex flex-col items-center justify-start h-full pt-6 px-6">
+                        <header className="bg-white/80 backdrop-blur-lg rounded-[2rem] shadow-xl p-5 w-full max-w-2xl flex justify-between items-center mb-8 border-b-4 border-blue-200">
                             <div className="flex items-center gap-4">
-                                <div className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg"><i className="fas fa-brain text-2xl"></i></div>
+                                <div className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg"><i className="fas fa-book-open text-2xl"></i></div>
                                 <div>
                                     <h1 className="text-2xl font-black text-blue-900 leading-tight">Thành Ngữ Nhí</h1>
-                                    <p className="text-[11px] text-blue-600 font-bold uppercase tracking-[0.2em]">Siêu Cấp Trí Nhớ</p>
+                                    <p className="text-[11px] text-blue-600 font-bold uppercase tracking-[0.2em]">Chinh Phục Trí Nhớ</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-[11px] font-black text-slate-400 uppercase">Điểm của bé</div>
-                                <div className="text-4xl font-black text-orange-500 tabular-nums">{score}</div>
+                                <div className="text-[11px] font-black text-slate-400 uppercase">Điểm tích lũy</div>
+                                <div className="text-4xl font-black text-blue-700 tabular-nums">{score}</div>
                             </div>
                         </header>
 
                         {status === 'PREVIEW' && (
-                            <div className="mb-8 flex flex-col items-center animate-bounce">
-                                <div className="bg-orange-500 text-white px-10 py-4 rounded-full text-2xl font-black shadow-lg flex items-center gap-4">
-                                    <i className="fas fa-stopwatch text-3xl"></i>
-                                    Ghi nhớ nhanh: {previewTimer}s
+                            <div className="mb-6 flex flex-col items-center animate-bounce">
+                                <div className="bg-blue-600 text-white px-10 py-4 rounded-full text-2xl font-black shadow-lg flex items-center gap-4">
+                                    <i className="fas fa-eye text-3xl"></i>
+                                    Thời gian ghi nhớ: {previewTimer}s
                                 </div>
                             </div>
                         )}
 
-                        {/* Tăng khoảng cách grid từ gap-8 lên gap-10 và thêm padding bao quanh */}
-                        <main className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-12 mb-10 px-4">
+                        <main className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-12 mb-8 px-4">
                             {pieces.map(piece => {
-                                // Trong chế độ PREVIEW, tất cả thẻ đều lật để thấy chữ
                                 const isFlipped = status === 'PREVIEW' || flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId);
                                 const isMatched = matchedIdiomIds.includes(piece.idiomId);
-                                
                                 return (
                                     <div key={piece.id} onClick={() => handlePieceClick(piece)}
                                         className={`card-container relative h-48 w-full cursor-pointer transition-all duration-300 ${status === 'PLAYING' ? 'hover:scale-105 active:scale-95' : 'cursor-default'} ${isFlipped ? 'card-flipped' : ''}`}
                                     >
                                         <div className={`card-inner h-full w-full ${shakingPieceIds.includes(piece.id) ? 'animate-shake' : ''}`}>
-                                            {/* Mặt sau - Hiển thị Số thứ tự */}
-                                            <div className="card-face card-back shadow-lg">
+                                            <div className="card-face card-back shadow-lg border-blue-300">
                                                 <span className="text-6xl font-black">{piece.displayIndex}</span>
                                             </div>
-                                            
-                                            {/* Mặt trước - Hiển thị Thành ngữ */}
-                                            <div className={`card-face card-front px-4 py-2 text-center shadow-xl ${isMatched ? 'border-emerald-500 bg-emerald-50' : ''}`}>
-                                                <p className={`text-xl font-black leading-tight ${isMatched ? 'text-emerald-700' : 'text-blue-900'}`}>{piece.text}</p>
+                                            <div className={`card-face card-front px-4 py-2 text-center shadow-xl border-orange-400 ${isMatched ? 'border-emerald-500 bg-emerald-50' : 'bg-white'}`}>
+                                                <p className={`text-xl md:text-2xl font-black leading-tight ${isMatched ? 'text-emerald-700' : 'text-blue-900'}`}>{piece.text}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -322,26 +397,26 @@
                             })}
                         </main>
 
-                        <div className="w-full max-w-2xl min-h-[160px] flex flex-col items-center justify-center gap-6">
+                        <div className="w-full max-w-2xl min-h-[140px] flex flex-col items-center justify-center gap-6">
                             {feedback && (
                                 <div className={`px-10 py-4 rounded-3xl font-black shadow-2xl animate-bounce text-white flex items-center gap-3 text-lg ${feedback.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
-                                    <i className={`fas ${feedback.type === 'success' ? 'fa-star' : 'fa-lightbulb'}`}></i>
+                                    <i className={`fas ${feedback.type === 'success' ? 'fa-check-circle' : 'fa-lightbulb'}`}></i>
                                     {feedback.text}
                                 </div>
                             )}
                             {insight && !feedback && (
-                                <div className="bg-white/95 p-6 rounded-[2.5rem] border-l-[16px] border-yellow-400 shadow-2xl w-full transform animate-in slide-in-from-bottom-5 fade-in duration-500">
+                                <div className="bg-white/95 p-6 rounded-[2.5rem] border-l-[16px] border-blue-500 shadow-2xl w-full transform animate-in slide-in-from-bottom-5 fade-in duration-500">
                                     <p className="text-lg font-bold text-slate-700 italic mb-3 leading-relaxed">"{insight.explanation}"</p>
                                     <div className="flex items-center justify-end gap-3 text-blue-600 font-black uppercase text-sm">
                                         <span>{insight.praise}</span>
-                                        <i className="fas fa-heart animate-pulse text-rose-500"></i>
+                                        <i className="fas fa-award text-blue-500"></i>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 w-[85%] max-w-md h-8 bg-white/40 backdrop-blur rounded-full p-1.5 border-2 border-white shadow-2xl overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-orange-400 to-rose-500 rounded-full transition-all duration-1000 ease-out shadow-inner" style={{ width: `${Math.min((score / WIN_SCORE) * 100, 100)}%` }}></div>
+                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[85%] max-w-md h-8 bg-white/40 backdrop-blur rounded-full p-1.5 border-2 border-white shadow-2xl overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-1000 ease-out shadow-inner" style={{ width: `${Math.min((score / WIN_SCORE) * 100, 100)}%` }}></div>
                         </div>
                     </div>
 
@@ -353,13 +428,13 @@
                                 />
                             ))}
                             <div className="bg-white rounded-[4rem] p-12 max-w-lg w-full shadow-[0_40px_100px_rgba(0,0,0,0.5)] text-center transform animate-in zoom-in duration-500 border-8 border-yellow-200 relative">
-                                <div className="w-36 h-36 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-10 shadow-2xl border-8 border-white animate-bounce">
-                                    <i className="fas fa-crown text-white text-7xl"></i>
+                                <div className="w-36 h-36 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-10 shadow-2xl border-8 border-white animate-bounce">
+                                    <i className="fas fa-graduation-cap text-white text-7xl"></i>
                                 </div>
-                                <h2 className="text-5xl font-black text-blue-900 mb-4 uppercase tracking-tight">Chiến Thắng!</h2>
-                                <p className="text-slate-500 mb-12 font-bold text-xl leading-relaxed">Bé là bậc thầy trí nhớ! <br/> Bé đã đạt được {score} điểm.</p>
+                                <h2 className="text-5xl font-black text-blue-900 mb-4 uppercase tracking-tight">Thành Công!</h2>
+                                <p className="text-slate-500 mb-12 font-bold text-xl leading-relaxed">Bạn đã hoàn thành thử thách với trí nhớ siêu đẳng! <br/> Tổng điểm: {score} điểm.</p>
                                 <button onClick={() => startNewRound(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-[2rem] shadow-2xl hover:scale-105 active:scale-95 transition-all text-2xl flex items-center justify-center gap-4">
-                                    <i className="fas fa-redo"></i> CHƠI LẠI NGAY
+                                    <i className="fas fa-redo"></i> CHƠI LẠI
                                 </button>
                             </div>
                         </div>
@@ -368,7 +443,7 @@
                     {status === 'LOADING' && (
                         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-blue-50">
                             <div className="w-24 h-24 border-8 border-blue-500 border-t-transparent rounded-full animate-spin mb-10"></div>
-                            <p className="text-blue-700 font-black text-3xl uppercase tracking-widest animate-pulse">Đang chuẩn bị...</p>
+                            <p className="text-blue-700 font-black text-3xl uppercase tracking-widest animate-pulse">Đang tải dữ liệu...</p>
                         </div>
                     )}
                 </div>
