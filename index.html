@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -39,6 +40,7 @@
         }
         .animate-shake { animation: shake 0.3s ease-in-out infinite; }
 
+        /* Celebration Balloons */
         .celebration-balloon {
             position: absolute; bottom: -150px; border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
             animation: rise-and-sway linear infinite; box-shadow: inset -10px -10px 20px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.1);
@@ -46,6 +48,7 @@
         .celebration-balloon::after {
             content: ""; position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%);
             border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 12px solid currentColor;
+            filter: brightness(0.9);
         }
         @keyframes rise-and-sway {
             0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
@@ -239,7 +242,6 @@
                     const p1 = pieces.find(p => p.id === id1);
                     const p2 = pieces.find(p => p.id === id2);
 
-                    // GIẢM THỜI GIAN CHỜ (từ 800ms xuống 300ms) để hiện kết quả nhanh hơn
                     setTimeout(async () => {
                         if (p1.idiomId === p2.idiomId) {
                             const newScore = score + 10;
@@ -322,12 +324,11 @@
                                         className={`card-container relative h-36 w-full cursor-pointer transition-transform duration-300 hover:scale-105 active:scale-95 ${isVisible ? 'card-flipped' : ''}`}
                                     >
                                         <div className={`card-inner h-full w-full ${shakingPieceIds.includes(piece.id) ? 'animate-shake' : ''}`}>
-                                            {/* SỐ THỨ TỰ TO VÀ RÕ HƠN Ở MẶT SAU */}
                                             <div className="card-face card-back border-red-500 shadow-md">
                                                 <span className="text-7xl font-black opacity-80 drop-shadow-lg">{index + 1}</span>
                                             </div>
                                             <div className={`card-face card-front px-3 py-1 text-center border-blue-400 shadow-xl ${isMatched ? 'border-green-500 bg-green-50' : 'bg-white'}`}>
-                                                <p className={`text-base font-black ${isMatched ? 'text-green-700' : 'text-blue-900'}`}>{piece.text}</p>
+                                                <p className={`text-xl md:text-2xl font-black leading-tight ${isMatched ? 'text-green-700' : 'text-blue-900'}`}>{piece.text}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -371,8 +372,8 @@
                                     </div>
                                     <h2 className="text-4xl font-black text-blue-900 mb-2 uppercase">Vô Địch!</h2>
                                     <p className="text-gray-500 mb-10 font-bold text-lg leading-tight">Bé đã đạt 100 điểm thử thách trí nhớ tuyệt đỉnh!</p>
-                                    <button onClick={() => startNewRound(true)} className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-xl hover:scale-105 active:scale-95 transition-all text-2xl">
-                                        CHƠI LẠI
+                                    <button onClick={() => startNewRound(true)} className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-xl hover:scale-105 active:scale-95 transition-all text-2xl flex items-center justify-center gap-3">
+                                        <i className="fas fa-play"></i> CHƠI LẠI
                                     </button>
                                 </div>
                             </div>
