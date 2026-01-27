@@ -4,16 +4,16 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Thành Ngữ Nhí - Trí Nhớ Siêu Phàm</title>
+    <title>Thành Ngữ Nhí - Siêu Cấp Trí Nhớ</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     
     <style>
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         @keyframes sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
-        @keyframes sun-glow { 0%, 100% { box-shadow: 0 0 40px #facc15; } 50% { box-shadow: 0 0 70px #facc15; } }
+        @keyframes sun-glow { 0%, 100% { box-shadow: 0 0 30px #facc15; } 50% { box-shadow: 0 0 60px #facc15; } }
         .animate-float { animation: float 6s ease-in-out infinite; }
         .animate-sway { animation: sway 4s ease-in-out infinite; transform-origin: bottom; }
         .animate-sun { animation: sun-glow 4s ease-in-out infinite; }
@@ -21,15 +21,16 @@
         .card-container { perspective: 1000px; }
         .card-inner {
             position: relative; width: 100%; height: 100%; text-align: center;
-            transition: transform 0.6s; transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
+            transform-style: preserve-3d;
         }
         .card-flipped .card-inner { transform: rotateY(180deg); }
         .card-face {
             position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
-            border-radius: 1rem; display: flex; align-items: center; justify-content: center;
+            border-radius: 1.5rem; display: flex; align-items: center; justify-content: center;
             border-width: 4px;
         }
-        .card-back { background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); color: white; }
+        .card-back { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; }
         .card-front { background: white; transform: rotateY(180deg); }
 
         @keyframes shake {
@@ -39,45 +40,16 @@
         }
         .animate-shake { animation: shake 0.4s ease-in-out infinite; }
 
-        /* Hiệu ứng bóng bay chiến thắng */
         .celebration-balloon {
-            position: absolute;
-            bottom: -150px;
-            border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
+            position: absolute; bottom: -150px; border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
             animation: rise-and-sway linear infinite;
-            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.1);
         }
-        .celebration-balloon::after {
-            content: "";
-            position: absolute;
-            bottom: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-bottom: 12px solid currentColor;
-            filter: brightness(0.9);
-        }
-        .celebration-balloon::before {
-            content: "";
-            position: absolute;
-            bottom: -40px;
-            left: 50%;
-            width: 2px;
-            height: 40px;
-            background: rgba(0,0,0,0.1);
-        }
-
         @keyframes rise-and-sway {
             0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
-            25% { transform: translateY(-30vh) translateX(25px) rotate(10deg); }
-            50% { transform: translateY(-60vh) translateX(-25px) rotate(-10deg); }
-            75% { transform: translateY(-90vh) translateX(25px) rotate(10deg); }
             100% { transform: translateY(-130vh) translateX(0) rotate(0deg); opacity: 0; }
         }
     </style>
 
-    <!-- Import Map for ESM Modules -->
     <script type="importmap">
     {
         "imports": {
@@ -90,11 +62,11 @@
     </script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="bg-sky-50 overflow-hidden">
+<body class="bg-blue-50 overflow-hidden">
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useCallback, useMemo } from 'react';
+        import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
         import ReactDOM from 'react-dom/client';
         import { GoogleGenAI, Type } from '@google/genai';
 
@@ -116,8 +88,21 @@
             { id: '15', part1: 'Vào sinh', part2: 'ra tử' },
         ];
 
+        const PREVIEW_DURATION = 10;
+        const CARDS_PER_ROUND = 4;
+        const WIN_SCORE = 100;
+
+        // Âm thanh URLs
+        const SOUNDS = {
+            BGM: 'https://assets.mixkit.co/music/preview/mixkit-funny-paws-574.mp3',
+            FLIP: 'https://assets.mixkit.co/sfx/preview/mixkit-simple-click-952.mp3',
+            SUCCESS: 'https://assets.mixkit.co/sfx/preview/mixkit-magic-marimba-2820.mp3',
+            ERROR: 'https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3',
+            WIN: 'https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'
+        };
+
         const TreeSVG = () => (
-            <svg width="120" height="180" viewBox="0 0 120 180" fill="none" className="opacity-80">
+            <svg width="120" height="180" viewBox="0 0 120 180" fill="none" className="opacity-80 drop-shadow-lg">
                 <rect x="50" y="100" width="20" height="80" fill="#78350f" />
                 <circle cx="60" cy="70" r="60" fill="#15803d" />
                 <circle cx="30" cy="50" r="30" fill="#16a34a" />
@@ -127,7 +112,7 @@
         );
 
         const StudentSVG = () => (
-            <svg width="80" height="120" viewBox="0 0 80 120" fill="none">
+            <svg width="80" height="120" viewBox="0 0 80 120" fill="none" className="drop-shadow-md">
                 <circle cx="40" cy="30" r="25" fill="#fde68a" />
                 <rect x="25" y="55" width="30" height="45" rx="5" fill="#3b82f6" />
                 <rect x="20" y="100" width="15" height="20" fill="#000" />
@@ -138,12 +123,12 @@
             </svg>
         );
 
-        const getIdiomInsight = async (idiom) => {
-            const ai = new GoogleGenAI({ apiKey: window.process?.env?.API_KEY || '' });
+        const getIdiomInsight = async (idiomText) => {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
             try {
                 const response = await ai.models.generateContent({
                     model: "gemini-3-flash-preview",
-                    contents: `Giải thích ý nghĩa của thành ngữ "${idiom}" cho trẻ em ngắn gọn, dễ hiểu và đưa ra lời khen.`,
+                    contents: `Giải thích ý nghĩa của thành ngữ "${idiomText}" cho trẻ em ngắn gọn, dễ hiểu và đưa ra lời khen.`,
                     config: {
                         responseMimeType: "application/json",
                         responseSchema: {
@@ -162,55 +147,6 @@
             }
         };
 
-        const ShareModal = ({ isOpen, onClose }) => {
-            if (!isOpen) return null;
-            const currentUrl = window.location.href;
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}&bgcolor=ffffff`;
-            return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-blue-900/60 backdrop-blur-md p-4">
-                    <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center transform animate-in zoom-in duration-300 border-4 border-blue-100">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-2xl font-black text-blue-900">Chia sẻ trò chơi</h3>
-                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><i className="fas fa-times text-xl"></i></button>
-                        </div>
-                        <div className="bg-sky-50 p-6 rounded-3xl mb-6 flex flex-col items-center border-2 border-dashed border-blue-200">
-                            <img src={qrUrl} alt="Mã QR" className="w-48 h-48 shadow-lg rounded-lg mb-4 bg-white p-2" />
-                            <p className="text-xs text-blue-600 font-bold uppercase tracking-wider">Quét để chơi ngay</p>
-                        </div>
-                        <button onClick={() => {navigator.clipboard.writeText(currentUrl); alert("Đã sao chép!");}} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg">Sao chép liên kết</button>
-                    </div>
-                </div>
-            );
-        };
-
-        const VictoryEffects = () => {
-            const balloons = useMemo(() => Array.from({ length: 45 }).map((_, i) => ({
-                id: i, 
-                left: `${Math.random() * 100}%`, 
-                size: `${Math.random() * 50 + 40}px`,
-                delay: `${Math.random() * 8}s`, 
-                duration: `${Math.random() * 4 + 5}s`,
-                color: ['#FF5E5E', '#FFD93D', '#6BCB77', '#4D96FF', '#917FB3', '#FF8B13'][Math.floor(Math.random() * 6)],
-            })), []);
-            return (
-                <div className="fixed inset-0 pointer-events-none z-[45] overflow-hidden">
-                    {balloons.map(b => (
-                        <div key={b.id} className="celebration-balloon"
-                            style={{ 
-                                left: b.left, 
-                                width: b.size, 
-                                height: `calc(${b.size} * 1.2)`, 
-                                color: b.color,
-                                backgroundColor: b.color, 
-                                animationDelay: b.delay, 
-                                animationDuration: b.duration 
-                            }}
-                        />
-                    ))}
-                </div>
-            );
-        };
-
         const App = () => {
             const [score, setScore] = useState(0);
             const [pieces, setPieces] = useState([]);
@@ -221,34 +157,94 @@
             const [feedback, setFeedback] = useState(null);
             const [insight, setInsight] = useState(null);
             const [activeIdioms, setActiveIdioms] = useState([]);
-            const [isShareOpen, setIsShareOpen] = useState(false);
+            const [previewTimer, setPreviewTimer] = useState(PREVIEW_DURATION);
             const [isChecking, setIsChecking] = useState(false);
+            const [isMuted, setIsMuted] = useState(false);
+
+            // Audio Refs
+            const audioRefs = useRef({
+                bgm: new Audio(SOUNDS.BGM),
+                flip: new Audio(SOUNDS.FLIP),
+                success: new Audio(SOUNDS.SUCCESS),
+                error: new Audio(SOUNDS.ERROR),
+                win: new Audio(SOUNDS.WIN)
+            });
+
+            useEffect(() => {
+                const { bgm } = audioRefs.current;
+                bgm.loop = true;
+                bgm.volume = 0.4;
+                
+                return () => {
+                    bgm.pause();
+                };
+            }, []);
+
+            useEffect(() => {
+                audioRefs.current.bgm.muted = isMuted;
+            }, [isMuted]);
+
+            const playSound = (type) => {
+                const sound = audioRefs.current[type];
+                if (sound) {
+                    sound.currentTime = 0;
+                    sound.play().catch(e => console.log("Audio play blocked", e));
+                }
+            };
 
             const startNewRound = useCallback((resetScore = false) => {
                 if (resetScore) setScore(0);
-                const selected = [...INITIAL_IDIOMS].sort(() => 0.5 - Math.random()).slice(0, 4);
+                
+                const selected = [...INITIAL_IDIOMS].sort(() => 0.5 - Math.random()).slice(0, CARDS_PER_ROUND);
                 setActiveIdioms(selected);
+                
                 const newPieces = [];
                 selected.forEach(idiom => {
                     newPieces.push({ id: `p1-${idiom.id}`, text: idiom.part1, idiomId: idiom.id });
                     newPieces.push({ id: `p2-${idiom.id}`, text: idiom.part2, idiomId: idiom.id });
                 });
-                setPieces([...newPieces].sort(() => 0.5 - Math.random()));
+
+                const shuffled = [...newPieces].sort(() => 0.5 - Math.random()).map((p, i) => ({ ...p, displayIndex: i + 1 }));
+                setPieces(shuffled);
                 setFlippedPieceIds([]);
                 setMatchedIdiomIds([]);
                 setShakingPieceIds([]);
                 setIsChecking(false);
-                setStatus('PLAYING');
                 setInsight(null);
+                setPreviewTimer(PREVIEW_DURATION);
+                setStatus('PREVIEW');
             }, []);
 
-            useEffect(() => { setTimeout(() => startNewRound(), 1000); }, [startNewRound]);
+            useEffect(() => {
+                const init = setTimeout(() => startNewRound(), 1000);
+                return () => clearTimeout(init);
+            }, [startNewRound]);
+
+            useEffect(() => {
+                if (status === 'PREVIEW') {
+                    if (previewTimer > 0) {
+                        const timer = setTimeout(() => setPreviewTimer(previewTimer - 1), 1000);
+                        return () => clearTimeout(timer);
+                    } else {
+                        setStatus('PLAYING');
+                    }
+                }
+                if (status === 'WON') {
+                    playSound('win');
+                }
+            }, [status, previewTimer]);
 
             const handlePieceClick = async (piece) => {
+                // Khởi động nhạc nền ở lần nhấn đầu tiên nếu trình duyệt chặn tự phát
+                if (audioRefs.current.bgm.paused && !isMuted) {
+                    audioRefs.current.bgm.play();
+                }
+
                 if (status !== 'PLAYING' || isChecking) return;
                 if (flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId)) return;
                 if (flippedPieceIds.length >= 2) return;
 
+                playSound('flip');
                 const newFlipped = [...flippedPieceIds, piece.id];
                 setFlippedPieceIds(newFlipped);
 
@@ -257,89 +253,112 @@
                     const firstPiece = pieces.find(p => p.id === newFlipped[0]);
                     const secondPiece = piece;
 
-                    setTimeout(async () => {
-                        if (firstPiece.idiomId === secondPiece.idiomId) {
-                            const newScore = score + 10;
-                            setScore(newScore);
-                            setMatchedIdiomIds(prev => [...prev, firstPiece.idiomId]);
-                            setFlippedPieceIds([]);
-                            setFeedback({ text: 'Rất giỏi! +10 điểm', type: 'success' });
-                            setIsChecking(false);
+                    if (firstPiece.idiomId === secondPiece.idiomId) {
+                        const newScore = score + 10;
+                        setScore(newScore);
+                        setMatchedIdiomIds(prev => [...prev, firstPiece.idiomId]);
+                        setFlippedPieceIds([]);
+                        playSound('success');
+                        setFeedback({ text: 'Rất giỏi! Bé đã ghép đúng!', type: 'success' });
+                        setIsChecking(false);
 
-                            const idiomObj = activeIdioms.find(i => i.id === piece.idiomId);
-                            if (idiomObj) {
-                                const data = await getIdiomInsight(`${idiomObj.part1} ${idiomObj.part2}`);
-                                setInsight(data);
-                            }
-
-                            if (matchedIdiomIds.length + 1 === 4) {
-                                if (newScore >= 100) {
-                                    setStatus('WON');
-                                } else {
-                                    setTimeout(() => startNewRound(), 3500);
-                                }
-                            }
-                        } else {
-                            setShakingPieceIds(newFlipped);
-                            setFeedback({ text: 'Cố lên, thử lại nhé!', type: 'error' });
-                            setTimeout(() => {
-                                setShakingPieceIds([]);
-                                setFlippedPieceIds([]);
-                                setIsChecking(false);
-                            }, 1000);
+                        const idiomObj = activeIdioms.find(i => i.id === piece.idiomId);
+                        if (idiomObj) {
+                            const data = await getIdiomInsight(`${idiomObj.part1} ${idiomObj.part2}`);
+                            setInsight(data);
                         }
-                    }, 800);
+
+                        if (matchedIdiomIds.length + 1 === CARDS_PER_ROUND) {
+                            if (newScore >= WIN_SCORE) {
+                                setTimeout(() => setStatus('WON'), 1500);
+                            } else {
+                                setTimeout(() => startNewRound(), 4000);
+                            }
+                        }
+                    } else {
+                        setShakingPieceIds(newFlipped);
+                        playSound('error');
+                        setFeedback({ text: 'Cố lên, thử lại nhé!', type: 'error' });
+                        setTimeout(() => {
+                            setShakingPieceIds([]);
+                            setFlippedPieceIds([]);
+                            setIsChecking(false);
+                        }, 1200);
+                    }
+                    setTimeout(() => setFeedback(null), 3000);
                 }
-                setTimeout(() => setFeedback(null), 2500);
             };
 
+            const VictoryBalloons = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
+                id: i,
+                left: `${Math.random() * 100}%`,
+                size: `${Math.random() * 40 + 40}px`,
+                delay: `${Math.random() * 5}s`,
+                duration: `${Math.random() * 3 + 4}s`,
+                color: ['#FF5E5E', '#FFD93D', '#6BCB77', '#4D96FF', '#917FB3'][Math.floor(Math.random() * 5)],
+            })), []);
+
             return (
-                <div className="relative w-full h-screen overflow-hidden flex flex-col font-sans text-gray-800 bg-sky-50">
-                    <div className="absolute inset-0 z-0 pointer-events-none select-none">
+                <div className="relative w-full h-screen overflow-hidden flex flex-col font-sans text-slate-800 bg-blue-50">
+                    {/* Background Decors */}
+                    <div className="absolute inset-0 z-0 pointer-events-none">
                         <div className="absolute top-10 right-10 w-24 h-24 bg-yellow-400 rounded-full animate-sun flex items-center justify-center">
-                            <div className="w-20 h-20 bg-yellow-300 rounded-full border-4 border-yellow-200" />
+                            <div className="w-20 h-20 bg-yellow-300 rounded-full border-4 border-yellow-100" />
                         </div>
-                        <div className="absolute bottom-0 w-full h-[15%] bg-green-500 rounded-t-[100%] scale-x-150 transform translate-y-1/4"></div>
-                        <div className="absolute bottom-16 left-8 animate-sway"><TreeSVG /></div>
-                        <div className="absolute bottom-12 right-4 animate-sway" style={{ animationDelay: '1s' }}><TreeSVG /></div>
-                        <div className="absolute bottom-8 left-[15%] transform scale-x-[-1] opacity-90"><StudentSVG /></div>
-                        <div className="absolute bottom-8 right-[15%] opacity-90"><StudentSVG /></div>
+                        <div className="absolute bottom-0 w-full h-[20%] bg-emerald-500 rounded-t-[100%] scale-x-150 transform translate-y-1/4"></div>
+                        <div className="absolute bottom-16 left-12 animate-sway"><TreeSVG /></div>
+                        <div className="absolute bottom-20 right-12 animate-sway" style={{ animationDelay: '1.5s' }}><TreeSVG /></div>
+                        <div className="absolute bottom-10 left-[20%] transform scale-x-[-1] opacity-90"><StudentSVG /></div>
+                        <div className="absolute bottom-10 right-[20%] opacity-90"><StudentSVG /></div>
                     </div>
 
-                    <div className="relative z-10 flex flex-col items-center justify-start h-full pt-6 px-4">
-                        <header className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-4 w-full max-w-2xl flex justify-between items-center mb-8 border-b-8 border-blue-200">
+                    <div className="relative z-10 flex flex-col items-center justify-start h-full pt-8 px-6">
+                        <header className="bg-white/80 backdrop-blur-lg rounded-[2rem] shadow-xl p-5 w-full max-w-2xl flex justify-between items-center mb-10 border-b-4 border-blue-200">
                             <div className="flex items-center gap-4">
-                                <div className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg"><i className="fas fa-graduation-cap text-2xl"></i></div>
+                                <div className="bg-blue-600 p-4 rounded-2xl text-white shadow-lg"><i className="fas fa-brain text-2xl"></i></div>
                                 <div>
-                                    <h1 className="text-2xl font-black text-blue-900 leading-none">Thành Ngữ Nhí</h1>
-                                    <p className="text-[10px] text-blue-600 font-bold mt-1 uppercase tracking-widest">Học mà chơi - Chơi mà học</p>
+                                    <h1 className="text-2xl font-black text-blue-900 leading-tight">Thành Ngữ Nhí</h1>
+                                    <p className="text-[11px] text-blue-600 font-bold uppercase tracking-[0.2em]">Siêu Cấp Trí Nhớ</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <button onClick={() => setIsShareOpen(true)} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all">
-                                    <i className="fas fa-qrcode text-xl"></i>
+                            <div className="flex items-center gap-4">
+                                <button 
+                                    onClick={() => setIsMuted(!isMuted)} 
+                                    className="w-12 h-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
+                                    title={isMuted ? "Bật âm thanh" : "Tắt âm thanh"}
+                                >
+                                    <i className={`fas ${isMuted ? 'fa-volume-mute' : 'fa-volume-up'} text-xl`}></i>
                                 </button>
                                 <div className="text-right">
-                                    <div className="text-[10px] font-black text-gray-400 uppercase">Điểm</div>
-                                    <div className="text-4xl font-black text-orange-500">{score}</div>
+                                    <div className="text-[11px] font-black text-slate-400 uppercase">Điểm của bé</div>
+                                    <div className="text-4xl font-black text-orange-500 tabular-nums">{score}</div>
                                 </div>
                             </div>
                         </header>
 
-                        <main className="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        {status === 'PREVIEW' && (
+                            <div className="mb-8 flex flex-col items-center animate-bounce">
+                                <div className="bg-orange-500 text-white px-10 py-4 rounded-full text-2xl font-black shadow-lg flex items-center gap-4">
+                                    <i className="fas fa-stopwatch text-3xl"></i>
+                                    Ghi nhớ nhanh: {previewTimer}s
+                                </div>
+                            </div>
+                        )}
+
+                        <main className="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
                             {pieces.map(piece => {
-                                const isVisible = flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId);
+                                const isFlipped = status === 'PREVIEW' || flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId);
                                 const isMatched = matchedIdiomIds.includes(piece.idiomId);
                                 return (
                                     <div key={piece.id} onClick={() => handlePieceClick(piece)}
-                                        className={`card-container relative h-32 w-full cursor-pointer transition-transform duration-300 hover:scale-105 active:scale-95 ${isVisible ? 'card-flipped' : ''}`}
+                                        className={`card-container relative h-44 w-full cursor-pointer transition-all duration-300 ${status === 'PLAYING' ? 'hover:scale-105 active:scale-95' : 'cursor-default'} ${isFlipped ? 'card-flipped' : ''}`}
                                     >
                                         <div className={`card-inner h-full w-full ${shakingPieceIds.includes(piece.id) ? 'animate-shake' : ''}`}>
-                                            <div className="card-face card-back border-red-500 shadow-md">
-                                                <i className="fas fa-star text-3xl"></i>
+                                            <div className="card-face card-back border-blue-600 shadow-lg">
+                                                <span className="text-5xl font-black">{piece.displayIndex}</span>
                                             </div>
-                                            <div className={`card-face card-front px-3 py-1 text-center border-blue-400 shadow-xl ${isMatched ? 'border-green-500 bg-green-50' : 'bg-white'}`}>
-                                                <p className={`text-base font-black ${isMatched ? 'text-green-700' : 'text-blue-900'}`}>{piece.text}</p>
+                                            <div className={`card-face card-front px-4 py-2 text-center border-orange-400 shadow-xl ${isMatched ? 'border-emerald-500 bg-emerald-50' : 'bg-white'}`}>
+                                                <p className={`text-xl font-black leading-tight ${isMatched ? 'text-emerald-700' : 'text-blue-900'}`}>{piece.text}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -347,59 +366,53 @@
                             })}
                         </main>
 
-                        <div className="w-full max-w-2xl min-h-[140px] flex flex-col items-center justify-center gap-4">
+                        <div className="w-full max-w-2xl min-h-[160px] flex flex-col items-center justify-center gap-6">
                             {feedback && (
-                                <div className={`px-8 py-3 rounded-full font-black shadow-xl animate-bounce text-white flex items-center gap-2 ${feedback.type === 'success' ? 'bg-green-500' : 'bg-orange-600'}`}>
-                                    <i className={`fas ${feedback.type === 'success' ? 'fa-medal' : 'fa-lightbulb'}`}></i>
+                                <div className={`px-10 py-4 rounded-3xl font-black shadow-2xl animate-bounce text-white flex items-center gap-3 text-lg ${feedback.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                                    <i className={`fas ${feedback.type === 'success' ? 'fa-star' : 'fa-lightbulb'}`}></i>
                                     {feedback.text}
                                 </div>
                             )}
                             {insight && !feedback && (
-                                <div className="bg-white/95 p-6 rounded-[2rem] border-l-[15px] border-yellow-400 shadow-2xl w-full animate-in slide-in-from-bottom-5 duration-500">
-                                    <p className="text-lg font-bold text-gray-700 italic mb-3 leading-relaxed">"{insight.explanation}"</p>
-                                    <div className="flex items-center justify-end gap-2 text-blue-600 font-black uppercase text-sm">
+                                <div className="bg-white/95 p-6 rounded-[2.5rem] border-l-[16px] border-yellow-400 shadow-2xl w-full transform animate-in slide-in-from-bottom-5 fade-in duration-500">
+                                    <p className="text-lg font-bold text-slate-700 italic mb-3 leading-relaxed">"{insight.explanation}"</p>
+                                    <div className="flex items-center justify-end gap-3 text-blue-600 font-black uppercase text-sm">
                                         <span>{insight.praise}</span>
-                                        <i className="fas fa-heart animate-pulse"></i>
+                                        <i className="fas fa-heart animate-pulse text-rose-500"></i>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[80%] max-w-md h-7 bg-white/40 backdrop-blur rounded-full p-1 border-2 border-white shadow-xl overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full transition-all duration-1000 ease-out shadow-inner" style={{ width: `${Math.min(score, 100)}%` }}></div>
+                        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 w-[85%] max-w-md h-8 bg-white/40 backdrop-blur rounded-full p-1.5 border-2 border-white shadow-2xl overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-orange-400 to-rose-500 rounded-full transition-all duration-1000 ease-out shadow-inner" style={{ width: `${Math.min((score / WIN_SCORE) * 100, 100)}%` }}></div>
                         </div>
                     </div>
 
-                    <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
-
                     {status === 'WON' && (
-                        <>
-                            <VictoryEffects />
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900/40 backdrop-blur-lg p-4">
-                                <div className="bg-white rounded-[3.5rem] p-12 max-w-md w-full shadow-[0_30px_80px_rgba(0,0,0,0.4)] text-center transform animate-in zoom-in duration-500 border-8 border-yellow-100 relative overflow-hidden">
-                                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-red-400 to-blue-400"></div>
-                                    <div className="w-32 h-32 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_15px_30px_rgba(250,204,21,0.4)] border-8 border-white animate-bounce">
-                                        <i className="fas fa-trophy text-white text-6xl"></i>
-                                    </div>
-                                    <h2 className="text-4xl font-black text-blue-900 mb-2 uppercase tracking-tight">Tuyệt Vời!</h2>
-                                    <p className="text-gray-500 mb-10 font-bold text-lg leading-tight">Bé đã hoàn thành xuất sắc thử thách trí nhớ 100 điểm!</p>
-                                    <div className="flex flex-col gap-4">
-                                        <button onClick={() => startNewRound(true)} className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all text-2xl flex items-center justify-center gap-3">
-                                            <i className="fas fa-play"></i> CHƠI LẠI
-                                        </button>
-                                        <button onClick={() => setIsShareOpen(true)} className="w-full bg-sky-100 text-blue-600 font-black py-4 rounded-3xl border-2 border-blue-200 hover:bg-sky-200 transition-colors">
-                                            CHIA SẺ CHIẾN TÍCH
-                                        </button>
-                                    </div>
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900/40 backdrop-blur-xl p-6">
+                            {VictoryBalloons.map(b => (
+                                <div key={b.id} className="celebration-balloon"
+                                    style={{ left: b.left, width: b.size, height: `calc(${b.size} * 1.3)`, backgroundColor: b.color, animationDelay: b.delay, animationDuration: b.duration }}
+                                />
+                            ))}
+                            <div className="bg-white rounded-[4rem] p-12 max-w-lg w-full shadow-[0_40px_100px_rgba(0,0,0,0.5)] text-center transform animate-in zoom-in duration-500 border-8 border-yellow-200 relative">
+                                <div className="w-36 h-36 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-10 shadow-2xl border-8 border-white animate-bounce">
+                                    <i className="fas fa-crown text-white text-7xl"></i>
                                 </div>
+                                <h2 className="text-5xl font-black text-blue-900 mb-4 uppercase tracking-tight">Chiến Thắng!</h2>
+                                <p className="text-slate-500 mb-12 font-bold text-xl leading-relaxed">Bé là bậc thầy trí nhớ! <br/> Bé đã đạt được {score} điểm.</p>
+                                <button onClick={() => startNewRound(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-[2rem] shadow-2xl hover:scale-105 active:scale-95 transition-all text-2xl flex items-center justify-center gap-4">
+                                    <i className="fas fa-redo"></i> CHƠI LẠI NGAY
+                                </button>
                             </div>
-                        </>
+                        </div>
                     )}
 
                     {status === 'LOADING' && (
-                        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-sky-100">
-                            <div className="w-20 h-20 border-8 border-blue-500 border-t-transparent rounded-full animate-spin mb-8"></div>
-                            <p className="text-blue-700 font-black text-2xl uppercase tracking-widest animate-pulse">Đang chuẩn bị...</p>
+                        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-blue-50">
+                            <div className="w-24 h-24 border-8 border-blue-500 border-t-transparent rounded-full animate-spin mb-10"></div>
+                            <p className="text-blue-700 font-black text-3xl uppercase tracking-widest animate-pulse">Đang chuẩn bị...</p>
                         </div>
                     )}
                 </div>
