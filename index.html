@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -80,24 +79,23 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useCallback, useMemo } from 'react';
         import ReactDOM from 'react-dom/client';
-        import { GoogleGenAI, Type } from '@google/genai';
 
         const INITIAL_IDIOMS = [
-            { id: '1', part1: 'Nước đến chân', part2: 'mới nhảy' },
-            { id: '2', part1: 'Đầu tắt', part2: 'mặt tối' },
-            { id: '3', part1: 'Một nắng', part2: 'hai sương' },
-            { id: '4', part1: 'Lên voi', part2: 'xuống chó' },
-            { id: '5', part1: 'Mặt dày', part2: 'mày dạn' },
-            { id: '6', part1: 'Ăn không', part2: 'nói có' },
-            { id: '7', part1: 'Há miệng', part2: 'chờ sung' },
-            { id: '8', part1: 'Chân lấm', part2: 'tay bùn' },
-            { id: '9', part1: 'Được voi', part2: 'đòi tiên' },
-            { id: '10', part1: 'Tiền mất', part2: 'tật mang' },
-            { id: '11', part1: 'Đứng núi này', part2: 'trông núi nọ' },
-            { id: '12', part1: 'Nói một đằng', part2: 'làm một nẻo' },
-            { id: '13', part1: 'Tai to', part2: 'mặt lớn' },
-            { id: '14', part1: 'Mắt thấy', part2: 'tai nghe' },
-            { id: '15', part1: 'Vào sinh', part2: 'ra tử' },
+            { id: '1', part1: 'Nước đến chân', part2: 'mới nhảy', explanation: 'Chỉ những người nước tới chân mới chịu làm, chần chừ, không chuẩn bị trước, để sát hạn mới hành động.' },
+            { id: '2', part1: 'Đầu tắt', part2: 'mặt tối', explanation: 'Miêu tả cuộc sống vất vả, bận rộn suốt ngày, làm việc từ sáng sớm đến tối mịt.' },
+            { id: '3', part1: 'Một nắng', part2: 'hai sương', explanation: 'Chỉ sự lam lũ, cực nhọc, thường dùng để nói về người lao động, nhất là nông dân.' },
+            { id: '4', part1: 'Lên voi', part2: 'xuống chó', explanation: 'Chỉ sự thay đổi địa vị, số phận thất thường, lúc giàu sang quyền thế, lúc sa cơ khốn khó.' },
+            { id: '5', part1: 'Mặt dày', part2: 'mày dạn', explanation: 'Chỉ người trơ trẽn, không biết xấu hổ, bị chê trách hay từ chối vẫn tỉnh bơ.' },
+            { id: '6', part1: 'Ăn không', part2: 'nói có', explanation: 'Vu khống, bịa đặt chuyện không có thật, nói sai sự thật để hại người khác.' },
+            { id: '7', part1: 'Há miệng', part2: 'chờ sung', explanation: 'Chỉ người lười biếng, không chịu làm mà chỉ mong hưởng lợi sẵn có.' },
+            { id: '8', part1: 'Chân lấm', part2: 'tay bùn', explanation: 'Chỉ người lao động chân tay vất vả, thường dùng để nói về nông dân, người làm việc đồng áng.' },
+            { id: '9', part1: 'Được voi', part2: 'đòi tiên', explanation: 'Khi đã được một thứ rồi lại đòi hỏi thêm quá đáng, không biết đủ.' },
+            { id: '10', part1: 'Tiền mất', part2: 'tật mang', explanation: 'Vừa mất tiền, lại còn rước thêm phiền phức hoặc bệnh tật, lợi bất cập hại.' },
+            { id: '11', part1: 'Đứng núi này', part2: 'trông núi nọ', explanation: 'Không biết trân trọng cái mình đang có, luôn so sánh và ham cái tốt hơn của người khác.' },
+            { id: '12', part1: 'Nói một đằng', part2: 'làm một nẻo', explanation: 'Lời nói không đi đôi với việc làm, thiếu trung thực, không giữ lời.' },
+            { id: '13', part1: 'Tai to', part2: 'mặt lớn', explanation: 'Chỉ người có địa vị, quyền thế, quen biết rộng, thường là người “có tiếng nói”, được nể trọng trong xã hội.' },
+            { id: '14', part1: 'Mắt thấy', part2: 'tai nghe', explanation: 'Chỉ điều gì đó được chứng kiến trực tiếp, nên đáng tin cậy.' },
+            { id: '15', part1: 'Vào sinh', part2: 'ra tử', explanation: 'Trải qua nguy hiểm, gian khổ tột cùng, thường dùng để nói về chiến tranh, cứu nạn, hoặc hoàn cảnh sống chết.' },
         ];
 
         const TreeSVG = () => (
@@ -121,30 +119,6 @@
                 <path d="M35 40C35 40 40 45 45 40" stroke="#000" strokeWidth="2" strokeLinecap="round" />
             </svg>
         );
-
-        const getIdiomInsight = async (idiom) => {
-            const ai = new GoogleGenAI({ apiKey: window.process?.env?.API_KEY || '' });
-            try {
-                const response = await ai.models.generateContent({
-                    model: "gemini-3-flash-preview",
-                    contents: `Giải thích ý nghĩa của thành ngữ "${idiom}" cho trẻ em cực kỳ ngắn gọn (1 câu), dễ hiểu và đưa ra lời khen. Trả về JSON.`,
-                    config: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: Type.OBJECT,
-                            properties: {
-                                explanation: { type: Type.STRING },
-                                praise: { type: Type.STRING },
-                            },
-                            required: ["explanation", "praise"],
-                        },
-                    },
-                });
-                return JSON.parse(response.text);
-            } catch (error) {
-                return { explanation: "Bé đã ghép đúng một câu thành ngữ rất hay!", praise: "Tuyệt vời!" };
-            }
-        };
 
         const ShareModal = ({ isOpen, onClose }) => {
             if (!isOpen) return null;
@@ -228,7 +202,7 @@
 
             useEffect(() => { startNewRound(); }, [startNewRound]);
 
-            const handlePieceClick = async (piece) => {
+            const handlePieceClick = (piece) => {
                 if (status !== 'PLAYING' || isChecking || isPeeking) return;
                 if (flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId)) return;
                 if (flippedPieceIds.length >= 2) return;
@@ -242,7 +216,8 @@
                     const p1 = pieces.find(p => p.id === id1);
                     const p2 = pieces.find(p => p.id === id2);
 
-                    setTimeout(async () => {
+                    // Xử lý so khớp với độ trễ thấp
+                    setTimeout(() => {
                         if (p1.idiomId === p2.idiomId) {
                             const newScore = score + 10;
                             setScore(newScore);
@@ -253,8 +228,8 @@
 
                             const idiomObj = activeIdioms.find(i => i.id === p1.idiomId);
                             if (idiomObj) {
-                                const data = await getIdiomInsight(`${idiomObj.part1} ${idiomObj.part2}`);
-                                setInsight(data);
+                                // Hiển thị giải thích trực tiếp ngay lập tức
+                                setInsight({ explanation: idiomObj.explanation, praise: "Tuyệt vời!" });
                             }
 
                             if (matchedIdiomIds.length + 1 === 4) {
@@ -268,9 +243,9 @@
                                 setShakingPieceIds([]);
                                 setFlippedPieceIds([]);
                                 setIsChecking(false);
-                            }, 800);
+                            }, 600);
                         }
-                    }, 300);
+                    }, 200);
                 }
                 setTimeout(() => setFeedback(null), 2000);
             };
@@ -345,7 +320,7 @@
                             )}
                             {insight && !feedback && !isPeeking && (
                                 <div className="bg-white/95 p-6 rounded-[2rem] border-l-[15px] border-yellow-400 shadow-2xl w-full insight-appear">
-                                    <p className="text-xl font-bold text-gray-700 italic mb-2 leading-relaxed">"{insight.explanation}"</p>
+                                    <p className="text-xl md:text-2xl font-bold text-gray-700 italic mb-2 leading-relaxed">"{insight.explanation}"</p>
                                     <div className="flex items-center justify-end gap-2 text-blue-600 font-black uppercase text-sm">
                                         <span>{insight.praise}</span>
                                         <i className="fas fa-heart text-red-500 animate-pulse"></i>
