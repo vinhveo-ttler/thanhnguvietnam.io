@@ -289,7 +289,7 @@
             }, [isPeeking, peekTimer]);
 
             useEffect(() => {
-                const timer = setTimeout(() => startNewRound(), 500);
+                const timer = setTimeout(() => startNewRound(true), 500);
                 return () => clearTimeout(timer);
             }, []);
 
@@ -323,7 +323,13 @@
 
                     setTimeout(() => {
                         if (firstPiece.idiomId === secondPiece.idiomId) {
-                            playSound(successSoundRef);
+                            // Play success sound immediately with clone
+                            if (successSoundRef.current && !isMuted) {
+                                const s = successSoundRef.current.cloneNode();
+                                s.volume = 0.5;
+                                s.play().catch(() => {});
+                            }
+
                             const matchedIdiom = activeIdioms.find(i => i.id === firstPiece.idiomId);
                             const newScore = score + 10;
                             setScore(newScore);
@@ -347,7 +353,13 @@
                             setIsChecking(false);
                             if (matchedIdiom) setInsight(matchedIdiom.explanation);
                         } else {
-                            playSound(wrongSoundRef);
+                            // Play wrong sound with clone
+                            if (wrongSoundRef.current && !isMuted) {
+                                const s = wrongSoundRef.current.cloneNode();
+                                s.volume = 0.4;
+                                s.play().catch(() => {});
+                            }
+
                             setShakingPieceIds(newFlipped);
                             setFeedback({ text: 'Sai rồi, thử lại nhé!', type: 'error' });
                             setTimeout(() => {
