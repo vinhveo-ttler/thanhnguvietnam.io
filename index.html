@@ -3,20 +3,33 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title> Trí Nhớ Siêu Phàm </title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Siêu Cấp Trí Nhớ</title>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Quicksand', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         @keyframes sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
         @keyframes sun-glow { 0%, 100% { box-shadow: 0 0 40px #facc15; } 50% { box-shadow: 0 0 70px #facc15; } }
+
         .animate-float { animation: float 6s ease-in-out infinite; }
         .animate-sway { animation: sway 4s ease-in-out infinite; transform-origin: bottom; }
         .animate-sun { animation: sun-glow 4s ease-in-out infinite; }
-        
+
         .card-container { perspective: 1000px; }
         .card-inner {
             position: relative; width: 100%; height: 100%; text-align: center;
@@ -53,36 +66,24 @@
             0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
             100% { transform: translateY(-130vh) translateX(0) rotate(0deg); opacity: 0; }
         }
-        
-        body { margin: 0; padding: 0; overflow-x: hidden; }
+
         .insight-appear { animation: scaleIn 0.3s ease-out forwards; }
         @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         .btn-hop { animation: btnHop 2s infinite; }
         @keyframes btnHop { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
     </style>
-
-    <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react-dom": "https://esm.sh/react-dom@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "@google/genai": "https://esm.sh/@google/genai@1.3.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/"
-  }
-}
-</script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-sky-50 overflow-hidden">
     <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useCallback, useMemo } from 'react';
-        import ReactDOM from 'react-dom/client';
+    <!-- React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
         const INITIAL_IDIOMS = [
             { id: '1', part1: 'Nước đến chân', part2: 'mới nhảy', explanation: 'Mang sắc thái phê phán, ám chỉ một người hành động khi tình huống đã trở nên cấp bách, không còn đường lùi, thường dẫn đến kết quả kém hoặc rủi ro cao.' },
@@ -124,30 +125,6 @@
             </svg>
         );
 
-        const PencilSVG = () => (
-            <svg width="40" height="80" viewBox="0 0 40 80" fill="none" className="opacity-30 animate-float">
-                <path d="M10 60L10 10L20 0L30 10L30 60L20 75L10 60Z" fill="#fbbf24" stroke="#d97706" strokeWidth="2"/>
-                <path d="M10 15L30 15" stroke="#d97706" strokeWidth="1"/>
-                <rect x="15" y="65" width="10" height="5" fill="#000" />
-            </svg>
-        );
-
-        const BookSVG = () => (
-            <svg width="60" height="70" viewBox="0 0 60 70" fill="none" className="opacity-30 animate-sway">
-                <rect x="5" y="5" width="50" height="60" rx="4" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="2"/>
-                <path d="M15 20H45M15 30H45M15 40H35" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-        );
-
-        const RulerSVG = () => (
-            <svg width="30" height="100" viewBox="0 0 30 100" fill="none" className="opacity-30 animate-float" style={{animationDelay: '1.5s'}}>
-                <rect x="5" y="5" width="20" height="90" rx="2" fill="#d1d5db" stroke="#9ca3af" strokeWidth="2"/>
-                {[...Array(9)].map((_, i) => (
-                    <line key={i} x1="15" y1={15 + i * 10} x2="25" y2={15 + i * 10} stroke="#4b5563" strokeWidth="1" />
-                ))}
-            </svg>
-        );
-
         const VictoryEffects = () => {
             const balloons = useMemo(() => Array.from({ length: 45 }).map((_, i) => ({
                 id: i, left: `${Math.random() * 100}%`, size: `${Math.random() * 50 + 40}px`,
@@ -158,7 +135,15 @@
                 <div className="fixed inset-0 pointer-events-none z-[45] overflow-hidden">
                     {balloons.map(b => (
                         <div key={b.id} className="celebration-balloon"
-                            style={{ left: b.left, width: b.size, height: `calc(${b.size} * 1.2)`, color: b.color, backgroundColor: b.color, animationDelay: b.delay, animationDuration: b.duration }}
+                            style={{ 
+                                left: b.left, 
+                                width: b.size, 
+                                height: `calc(${b.size} * 1.2)`, 
+                                color: b.color, 
+                                backgroundColor: b.color, 
+                                animationDelay: b.delay, 
+                                animationDuration: b.duration 
+                            }}
                         />
                     ))}
                 </div>
@@ -192,12 +177,12 @@
             const [isMuted, setIsMuted] = useState(false);
             const [isAudioInitialized, setIsAudioInitialized] = useState(false);
 
-            const bgMusicRef = React.useRef(null);
-            const flipSoundRef = React.useRef(null);
-            const successSoundRef = React.useRef(null);
-            const wrongSoundRef = React.useRef(null);
-            const victorySoundRef = React.useRef(null);
-            const cheerSoundRef = React.useRef(null);
+            const bgMusicRef = useRef(null);
+            const flipSoundRef = useRef(null);
+            const successSoundRef = useRef(null);
+            const wrongSoundRef = useRef(null);
+            const victorySoundRef = useRef(null);
+            const cheerSoundRef = useRef(null);
 
             useEffect(() => {
                 bgMusicRef.current = new Audio(SOUNDS.BG);
@@ -298,7 +283,6 @@
                 if (flippedPieceIds.includes(piece.id) || matchedIdiomIds.includes(piece.idiomId)) return;
                 if (flippedPieceIds.length >= 2) return;
 
-                // Initialize background music on first interaction
                 if (!isAudioInitialized) {
                     if (bgMusicRef.current && !isMuted) {
                         bgMusicRef.current.play().catch(() => {});
@@ -306,7 +290,6 @@
                     setIsAudioInitialized(true);
                 }
 
-                // Play sound immediately
                 if (flipSoundRef.current && !isMuted) {
                     const s = flipSoundRef.current.cloneNode();
                     s.volume = 0.4;
@@ -323,7 +306,6 @@
 
                     setTimeout(() => {
                         if (firstPiece.idiomId === secondPiece.idiomId) {
-                            // Play success sound immediately with clone
                             if (successSoundRef.current && !isMuted) {
                                 const s = successSoundRef.current.cloneNode();
                                 s.volume = 0.5;
@@ -353,7 +335,6 @@
                             setIsChecking(false);
                             if (matchedIdiom) setInsight(matchedIdiom.explanation);
                         } else {
-                            // Play wrong sound with clone
                             if (wrongSoundRef.current && !isMuted) {
                                 const s = wrongSoundRef.current.cloneNode();
                                 s.volume = 0.4;
@@ -403,7 +384,7 @@
                                     <i className={`fas ${isMuted ? 'fa-volume-mute' : 'fa-volume-up'}`}></i>
                                 </button>
                                 <div>
-                                    <h1 className="text-xl md:text-2xl font-black text-blue-900 leading-none uppercase">Thành Ngữ Nhí</h1>
+                                    <h1 className="text-xl md:text-2xl font-black text-blue-900 leading-none uppercase">Siêu Cấp Trí Nhớ</h1>
                                     <p className="text-[10px] text-blue-600 font-bold mt-1 uppercase tracking-widest leading-none">Vòng {currentRound}/2</p>
                                 </div>
                             </div>
@@ -452,7 +433,7 @@
                             {insight && !feedback && !isPeeking && (
                                 <div className="bg-white/95 p-6 rounded-[2rem] border-l-[15px] border-yellow-400 shadow-2xl w-full insight-appear">
                                     <h3 className="text-blue-600 font-black text-lg mb-1 uppercase flex items-center gap-2"><i className="fas fa-lightbulb"></i> Ý nghĩa:</h3>
-                                    <p className="text-xl md:text-2xl font-bold text-gray-700 leading-snug">{insight}</p>
+                                    <p className="text-xl md:text-2xl font-black text-gray-700 leading-snug">{insight}</p>
                                     <div className="flex items-center justify-end mt-2 gap-2 text-green-600 font-black uppercase text-sm">
                                         <span>Rất tuyệt vời!</span>
                                         <i className="fas fa-heart text-red-500 animate-pulse"></i>
@@ -500,6 +481,5 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
